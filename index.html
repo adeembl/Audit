@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flash Audit Renault - Proceso Línea</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1, h2 { background: #f2f2f2; padding: 10px; }
+    label { font-weight: bold; margin-right: 5px; }
+    input[type="text"], input[type="date"], input[type="time"], select { margin-bottom: 10px; padding: 5px; width: 200px; }
+    textarea { margin-bottom: 10px; padding: 5px; width: 100%; height: 60px; }
+    .postit { background-color: #ffffcc; padding: 10px; margin-bottom: 10px; border: 1px dashed #ccc; }
+    .comentario-textarea { width: 100%; height: 60px; margin-top: 5px; padding: 5px; resize: vertical; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    table, th, td { border: 1px solid #ccc; }
+    th { background: #eaecee; text-align: left; padding: 5px; }
+    td { padding: 5px; vertical-align: top; }
+    .form-group { margin-bottom: 10px; }
+    button { padding: 10px 20px; font-size: 14px; cursor: pointer; margin-right: 10px; }
+    .ratingSelect { width: 70px; }
+    .resultado-ok { font-weight: bold; margin-top: 10px; font-size: 14px; }
+    img.preview { display: block; margin-top: 5px; max-width: 500px; border: 1px solid #ccc; }
+    .mini { width: 280px; max-width: 100%; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .row .col { display: inline-flex; flex-direction: column; }
+    .sublabel { display:block; font-weight:bold; margin-top:4px; }
+    @media (max-width: 640px){ input[type="text"], input[type="date"], input[type="time"], select { width: 100%; } }
+  </style>
+</head>
+<body>
+
+  <h1 id="titulo">FLASH AUDIT - Proceso Línea <span id="lineaTitulo">3</span></h1>
+
+  <!-- Datos generales -->
+  <div class="form-group">
+    <div class="row">
+      <div class="col">
+        <label for="fecha">Fecha:</label>
+        <input type="date" id="fecha" name="fecha" required />
+      </div>
+      <div class="col">
+        <label for="auditor">Auditor:</label>
+        <input type="text" id="auditor" name="auditor" placeholder="Nombre auditor" required />
+      </div>
+      <div class="col">
+        <label for="responsable">Responsable:</label>
+        <input type="text" id="responsable" name="responsable" placeholder="Responsable de Área" required />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label for="modelo">Modelo:</label>
+        <input type="text" id="modelo" name="modelo" placeholder="Modelo" required />
+      </div>
+      <div class="col">
+        <label for="linea">Línea:</label>
+        <select id="linea" name="linea" required>
+          <option value="">Seleccione</option>
+          <option value="Línea 1">Línea 1</option>
+          <option value="Línea 2">Línea 2</option>
+          <option value="Línea 3" selected>Línea 3</option>
+        </select>
+      </div>
+      <div class="col">
+        <label for="turno">Turno:</label>
+        <select id="turno" name="turno" required>
+          <option value="">Seleccione</option>
+          <option value="Mañana">Mañana</option>
+          <option value="Tarde">Tarde</option>
+          <option value="Noche">Noche</option>
+        </select>
+      </div>
+      <div class="col">
+        <label for="hora">Hora:</label>
+        <input type="time" id="hora" name="hora" required />
+      </div>
+    </div>
+  </div>
+
+  <!-- OPERACIONES -->
+  <h2>OPERACIONES</h2>
+  <table id="tablaOperaciones">
+    <thead>
+      <tr>
+        <th style="width: 5%;">Nº</th>
+        <th style="width: 75%;">Descripción de la Operación</th>
+        <th style="width: 20%;">Puntuación (1-5)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Extracción del techo de la Water Jet y colocación en mesa auxiliar.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Verificación de ausencia de pepitas en la cuna de Water Jet.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Accionamiento del cierre de la puerta de la Water Jet.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Eliminación de recortes y pepitas.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Verificación de ausencia de defectos (roturas, irregularidades en el corte).</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Dejar techo en máquina de pegado de componentes y accionar ciclo.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>Repaso del techo con cepillo.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- FRECUENCIALES -->
+  <h2>FRECUENCIALES</h2>
+  <table id="tablaFrecuenciales">
+    <thead>
+      <tr>
+        <th style="width: 5%;">Nº</th>
+        <th style="width: 75%;">Descripción de la Operación</th>
+        <th style="width: 20%;">Puntuación (1-5)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>7</td>
+        <td>Inicio del sistema informático y captura de datos.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>Rellenado del parte de trabajo.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td>Orden y limpieza según estado de referencia.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td>Mantenimiento primario.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td>Apoyo en preparación y cierre de contenedores.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td>Cambio de plástico y preparación de molde.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td>Retiro de carro de recortes y entrada de uno nuevo.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- AUTOCONTROL -->
+  <h2>AUTOCONTROL</h2>
+  <table id="tablaAutocontrol">
+    <thead>
+      <tr>
+        <th style="width: 5%;">Nº</th>
+        <th style="width: 75%;">Descripción</th>
+        <th style="width: 20%;">Puntuación (1-5)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>14</td>
+        <td>Verificación de la primera pieza (OK 1ª pieza).</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>15</td>
+        <td>Paso horario de control de calidad.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>16</td>
+        <td>Autocontrol de la pieza terminada.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>17</td>
+        <td>Rellenar Diario WJ</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PROHIBICIONES -->
+  <h2>PROHIBICIONES</h2>
+  <table id="tablaProhibiciones">
+    <thead>
+      <tr>
+        <th style="width: 5%;">Nº</th>
+        <th style="width: 75%;">Prohibición</th>
+        <th style="width: 20%;">Puntuación (1-5)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>No anular los sistemas de seguridad de la maquinaria.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>No desechar techos defectuosos sin registrarlos.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>No acumular recortes en exceso en el carro.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>No utilizar elementos de corte distintos a las tijeras.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>No embalar techos por parte del operario WJ.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option>
+          <option value="5">5</option>
+        </select></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- GP12 -->
+  <h2>GP12</h2>
+  <table id="tablaGP12">
+    <thead>
+      <tr>
+        <th style="width: 5%;">Nº</th>
+        <th style="width: 65%;">Descripción</th>
+        <th style="width: 15%;">Puntuación (1-5)</th>
+        <th style="width: 15%;">Adjuntar Imagen</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Revisión final de contenedor por el jefe de línea.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+        <td><input type="file" accept="image/*" capture="environment" onchange="previewImage(this)"><img class="preview" alt=""></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Correcto uso del scanner.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+        <td><input type="file" accept="image/*" capture="environment" onchange="previewImage(this)"><img class="preview" alt=""></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Sello tras revisión de techos por el operario.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+        <td><input type="file" accept="image/*" capture="environment" onchange="previewImage(this)"><img class="preview" alt=""></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Colocación de la etiqueta aceptado por el jefe de línea.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+        <td><input type="file" accept="image/*" capture="environment" onchange="previewImage(this)"><img class="preview" alt=""></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Colocación de contenedor nuevo tras retirada del mismo.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+        <td><input type="file" accept="image/*" capture="environment" onchange="previewImage(this)"><img class="preview" alt=""></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SENSORES DE LA WATER JET -->
+  <h2>SENSORES DE LA WATER JET</h2>
+  <table id="tablaSensoresWaterJet">
+    <thead>
+      <tr>
+        <th style="width: 5%;">Nº</th>
+        <th style="width: 65%;">Descripción del Sensor</th>
+        <th style="width: 15%;">Puntuación (1-5)</th>
+        <th style="width: 15%;">Adjuntar Imagen</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Revisión del funcionamiento de los sensores en el sistema Water Jet.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+        <td><input type="file" accept="image/*" capture="environment" onchange="previewImage(this)"><img class="preview" alt=""></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ONDULACIONES O IRREGULARIDADES EN QUARTER GLASS -->
+  <h2>ONDULACIONES O IRREGULARIDADES EN QUARTER GLASS</h2>
+  <table id="tablaQuarterGlass">
+    <thead>
+      <tr>
+        <th style="width: 5%;">Nº</th>
+        <th style="width: 65%;">Descripción</th>
+        <th style="width: 15%;">Puntuación (1-5)</th>
+        <th style="width: 15%;">Adjuntar Imagen</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Verificación de ondulaciones o irregularidades en Quarter Glass.</td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+        <td><input type="file" accept="image/*" capture="environment" onchange="previewImage(this)"><img class="preview" alt=""></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PROBETAS (AGUA Y ADHESIVO) - MISMA DINÁMICA -->
+  <h2>PROBETAS (AGUA Y ADHESIVO)</h2>
+  <table id="tablaProbetas">
+    <thead>
+      <tr>
+        <th style="width: 5%;">Nº</th>
+        <th style="width: 65%;">Descripción de la Probeta</th>
+        <th style="width: 15%;">Puntuación (1-5)</th>
+        <th style="width: 15%;">Adjuntar Imagen</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>
+          Probeta de agua
+          <div>
+            <span class="sublabel">Valor:</span>
+            <input type="text" id="idProbetaAgua" placeholder="" style="width:180px;">
+          </div>
+          
+        </td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+        <td>
+          <input type="file" accept="image/*" capture="environment" onchange="previewImage(this)">
+          <img class="preview" alt="">
+        </td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>
+          Probeta de adhesivo
+          <div>
+            <span class="sublabel">Valor:</span>
+            <input type="text" id="idProbetaAdhesivo" placeholder="" style="width:180px;">
+          </div>
+          
+        </td>
+        <td><select class="ratingSelect" onchange="onValueChanged()">
+          <option value=""></option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select></td>
+        <td>
+          <input type="file" accept="image/*" capture="environment" onchange="previewImage(this)">
+          <img class="preview" alt="">
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- NOTAS / COMENTARIOS ADICIONALES -->
+  <h2>NOTAS / COMENTARIOS ADICIONALES</h2>
+  <div id="comentariosContainer"></div>
+  <button type="button" onclick="addPostit()">Agregar Post-it</button>
+
+  <p class="resultado-ok">Puntuación media (1-5): <span id="averageRating">0.00</span></p>
+  <button type="button" onclick="generarPDF()">Generar PDF</button>
+
+  <!-- Librerías -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <script>
+    function calcRatingAverage() {
+      const ratingSelects = document.querySelectorAll('.ratingSelect');
+      let sum = 0, count = 0;
+      ratingSelects.forEach(sel => {
+        const val = parseInt(sel.value);
+        if (!isNaN(val)) { sum += val; count++; }
+      });
+      document.getElementById('averageRating').textContent = (count>0 ? sum/count : 0).toFixed(2);
+    }
+
+    function onValueChanged() {
+      calcRatingAverage();
+      document.querySelectorAll('.ratingSelect').forEach(function(select) {
+        const row = select.closest('tr');
+        if (select.value === "1") row.style.backgroundColor = 'red';
+        else if (select.value === "2") row.style.backgroundColor = 'orange';
+        else if (select.value === "3") row.style.backgroundColor = 'yellow';
+        else row.style.backgroundColor = '';
+      });
+    }
+
+    function previewImage(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          let preview = input.parentElement.querySelector('img.preview');
+          if (!preview) {
+            preview = document.createElement('img');
+            preview.className = 'preview';
+            input.parentElement.appendChild(preview);
+          }
+          preview.src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function addPostit() {
+      const container = document.createElement("div");
+      container.className = "postit";
+      const colorInput = document.createElement("input");
+      colorInput.type = "color";
+      colorInput.value = "#ffffcc";
+      colorInput.addEventListener("input", function(){ container.style.backgroundColor = colorInput.value; });
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/*";
+      fileInput.style.display = "block";
+      fileInput.addEventListener("change", function(){ previewImage(fileInput); });
+      const textarea = document.createElement("textarea");
+      textarea.className = "comentario-textarea";
+      textarea.placeholder = "Añade aquí tu comentario...";
+      container.appendChild(colorInput);
+      container.appendChild(fileInput);
+      container.appendChild(textarea);
+      document.getElementById("comentariosContainer").appendChild(container);
+    }
+
+    // Actualiza el título según la línea seleccionada
+    document.getElementById('linea').addEventListener('change', function(){
+      const lineaSeleccionada = this.value;
+      document.getElementById('lineaTitulo').textContent = lineaSeleccionada ? lineaSeleccionada.replace('Línea ', '') : '3';
+    });
+
+    async function generarPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'pt', 'a4');
+      const scale = 2;
+
+      const element = document.body;
+      await html2canvas(element, { scale: scale, useCORS: true, logging: false }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = doc.internal.pageSize.getWidth();
+        const pdfHeight = doc.internal.pageSize.getHeight();
+        const imgProps = doc.getImageProperties(imgData);
+        const imgWidth = pdfWidth;
+        const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          doc.addPage();
+          doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        }
+
+        const fecha = document.getElementById('fecha').value || new Date().toISOString().slice(0, 10);
+        const turno = document.getElementById('turno').value || 'sin_turno';
+        const responsable = document.getElementById('responsable').value || 'sin_responsable';
+        const modelo = document.getElementById('modelo').value || 'sin_modelo';
+        const linea = document.getElementById('linea').value || 'sin_linea';
+        const idAgua = (document.getElementById('idProbetaAgua')?.value || '').trim();
+        const idAdh  = (document.getElementById('idProbetaAdhesivo')?.value || '').trim();
+
+        function safe(s){ return s.replace(/\s+/g, '_'); }
+        const parts = ['flash_audit', fecha, safe(turno), safe(responsable), safe(modelo), safe(linea)];
+        if (idAgua) parts.push('agua_' + safe(idAgua));
+        if (idAdh)  parts.push('adh_'  + safe(idAdh));
+
+        doc.save(parts.join('_') + '.pdf');
+        // Alternativa móvil: abrir en nueva pestaña y compartir
+        // doc.output('dataurlnewwindow');
+      });
+    }
+  </script>
+
+</body>
+</html>
