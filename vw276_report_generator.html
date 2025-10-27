@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Informes VW276</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .controls-panel {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .controls-panel h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .button-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background-color: #345995;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2a477a;
+        }
+
+        button#generateAll {
+            background-color: #ca3542;
+        }
+
+        button#generateAll:hover {
+            background-color: #a12a35;
+        }
+
+        .model-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .model-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .model-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .model-card.selected {
+            border-color: #345995;
+            background-color: #f0f7ff;
+            box-shadow: 0 0 0 2px rgba(52, 89, 149, 0.2);
+        }
+
+        .model-card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .model-meta {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .model-meta span {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .preload-control {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border: 1px dashed #ccc;
+        }
+
+        .preload-control label {
+            font-weight: bold;
+        }
+
+        .preload-control input {
+            width: 80px;
+            padding: 5px;
+            margin: 0 10px;
+            text-align: center;
+        }
+
+        .options-panel {
+            margin-top: 20px;
+        }
+
+        .options-group {
+            margin-bottom: 15px;
+        }
+
+        .options-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        /* Estilos para el informe */
+        .informe {
+            background-color: white;
+            width: 892px;
+            height: 1262px;
+            position: relative;
+            margin: 20px auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+
+        .header-line {
+            position: absolute;
+            top: 120px;
+            left: 85px;
+            width: 730px;
+            height: 1px;
+            background-color: black;
+        }
+
+        .footer-line {
+            position: absolute;
+            bottom: 60px;
+            left: 85px;
+            width: 730px;
+            height: 1px;
+            background-color: black;
+        }
+
+        .title {
+            position: absolute;
+            top: 97px;
+            left: 280px;
+            font-size: 27px;
+            font-weight: bold;
+        }
+
+        .page-number {
+            position: absolute;
+            top: 1200px;
+            left: 765px;
+            font-size: 18px;
+        }
+
+        .section-title {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .table-params {
+            position: absolute;
+            top: 210px;
+            left: 128px;
+            font-size: 12px;
+        }
+
+        .table-params tr td:first-child {
+            font-weight: normal;
+            padding-right: 5px;
+            vertical-align: top;
+            padding-bottom: 1px;
+        }
+
+        .table-params tr td:nth-child(2) {
+            padding-left: 5px;
+            padding-bottom: 1px;
+        }
+
+        .results-table {
+            position: absolute;
+            top: 430px;
+            left: 100px;
+            border-collapse: collapse;
+        }
+
+        .results-table th, .results-table td {
+            font-size: 9px;
+            padding: 1px 3px;
+            text-align: center;
+            border: 1px solid black;
+        }
+
+        .results-table th {
+            font-weight: bold;
+        }
+
+        .color-box {
+            width: 30px;
+            height: 12px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .graph-container {
+            position: absolute;
+            top: 740px;
+            left: 160px;
+            width: 600px;
+            height: 300px;
+            border: none;
+        }
+
+        .graph-title {
+            position: absolute;
+            top: 710px;
+            left: 85px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .x-label {
+            position: absolute;
+            top: 1070px;
+            left: 390px;
+            font-size: 13px;
+            width: 200px;
+            text-align: center;
+        }
+
+        .y-label {
+            position: absolute;
+            top: 880px;
+            left: 95px;
+            font-size: 13px;
+            transform: rotate(-90deg);
+            width: 100px;
+            text-align: center;
+        }
+
+        .stats-table {
+            position: absolute;
+            top: 210px;
+            left: 170px;
+            border-collapse: collapse;
+            border: 1px solid black;
+            font-size: 12px;
+        }
+
+        .stats-table th, .stats-table td {
+            border: 1px solid black;
+            padding: 4px 12px;
+            text-align: center;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #345995;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #345995;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .parameter-editor {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .parameter-editor h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .parameter-group {
+            margin-bottom: 15px;
+        }
+
+        .parameter-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .parameter-label {
+            width: 180px;
+            font-weight: bold;
+            padding-top: 8px;
+        }
+
+        .parameter-input {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .parameter-input input,
+        .parameter-input textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .parameter-input button {
+            margin-left: 10px;
+        }
+
+        .parameter-input textarea {
+            min-height: 80px;
+        }
+
+        .parameter-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .global-params {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ccc;
+        }
+
+        .global-params h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .editable-cell {
+            background-color: #f9f9ff;
+            cursor: pointer;
+        }
+
+        .editable-cell:hover {
+            background-color: #f0f0ff;
+        }
+
+        #previewContainer {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .preview-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        #pdfContainer {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+        }
+
+        .section-results {
+            position: absolute;
+            top: 400px;
+            left: 85px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loadingIndicator">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Procesando...</div>
+    </div>
+
+    <div class="controls-panel">
+        <h2>Sistema de Generación de Informes - VW276</h2>
+
+        <div class="model-selection" id="modelSelection"></div>
+
+        <div class="preload-control">
+            <label for="preload-value">Valor de precarga (N):</label>
+            <input type="text" id="preload-value" value="0,00">
+            <button onclick="applyPreload()">Aplicar a todos</button>
+            <span style="margin-left: 20px; color: #666;">Este valor no aparecerá en los informes generados</span>
+        </div>
+
+        <div class="options-panel">
+            <div class="options-group">
+                <label>Opciones de generación:</label>
+                <div>
+                    <input type="checkbox" id="randomizeData" checked>
+                    <label for="randomizeData">Aleatorizar datos en cada generación</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="randomizeCurves" checked>
+                    <label for="randomizeCurves">Aleatorizar curvas</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button onclick="generateSelectedReport()">Generar PDF del modelo seleccionado</button>
+            <button onclick="showPreview()">Previsualizar informe</button>
+            <button id="generateAll" onclick="generateAllReports()">Generar todos los PDFs</button>
+        </div>
+    </div>
+
+    <div class="parameter-editor" id="parameterEditor">
+        <h3>Editar parámetros del informe</h3>
+
+        <div class="parameter-group">
+            <div class="parameter-row">
+                <div class="parameter-label">Nombre:</div>
+                <div class="parameter-input">
+                    <input type="text" id="edit-name">
+                </div>
+            </div>
+
+            <div class="parameter-row">
+                <div class="parameter-label">Fecha de este modelo:</div>
+                <div class="parameter-input">
+                    <input type="text" id="edit-date" placeholder="DD/MM/AAAA">
+                </div>
+            </div>
+
+            <div class="parameter-row">
+                <div class="parameter-label">Acondicionamiento:</div>
+                <div class="parameter-input">
+                    <input type="text" id="edit-condition">
+                </div>
+            </div>
+
+            <div class="parameter-row">
+                <div class="parameter-label">Rango eje Y (N):</div>
+                <div class="parameter-input">
+                    <input type="number" id="edit-yRange">
+                </div>
+            </div>
+
+            <div class="parameter-row">
+                <div class="parameter-label">Observación:</div>
+                <div class="parameter-input">
+                    <textarea id="edit-observation"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="parameter-group">
+            <h4>Valores objetivo de fuerza:</h4>
+            <div class="parameter-row">
+                <div class="parameter-label">Rango F máx (min-max):</div>
+                <div class="parameter-input" style="display: flex; gap: 10px;">
+                    <input type="number" id="edit-maxForceMin" step="0.1">
+                    <input type="number" id="edit-maxForceMax" step="0.1">
+                </div>
+            </div>
+
+            <div class="parameter-row">
+                <div class="parameter-label">Rango F media (min-max):</div>
+                <div class="parameter-input" style="display: flex; gap: 10px;">
+                    <input type="number" id="edit-medForceMin" step="0.1">
+                    <input type="number" id="edit-medForceMax" step="0.1">
+                </div>
+            </div>
+        </div>
+
+        <div class="global-params">
+            <h4>Parámetros globales:</h4>
+
+            <div class="parameter-row">
+                <div class="parameter-label">Fecha global:</div>
+                <div class="parameter-input">
+                    <input type="text" id="edit-global-date" placeholder="DD/MM/AAAA">
+                    <button onclick="applyDate2025ToAll()">Aplicar 2025 a todos</button>
+                </div>
+            </div>
+            <div style="margin-left: 180px; margin-top: -5px; margin-bottom: 15px; font-size: 12px; color: #666;">
+                Nota: Cada modelo tiene su propia fecha. Use "Aplicar 2025 a todos" para cambiar todos los modelos a la vez.
+            </div>
+
+            <div class="parameter-row">
+                <div class="parameter-label">Analista:</div>
+                <div class="parameter-input">
+                    <input type="text" id="edit-global-analyst" value="Lucía Herrero">
+                </div>
+            </div>
+        </div>
+
+        <div class="parameter-buttons">
+            <button onclick="saveParameters()">Guardar cambios</button>
+            <button onclick="resetParameters()">Restablecer valores originales</button>
+        </div>
+    </div>
+
+    <div id="previewContainer">
+        <div class="preview-title">Vista previa del informe (haga clic en F media/F max para editar)</div>
+    </div>
+
+    <div id="pdfContainer"></div>
+
+    <script>
+        let models = [
+            {
+                id: "model1",
+                name: "VW276 ND",
+                condition: "As-received condition",
+                date: "14/05/2025",
+                yRange: 25,
+                maxForceRange: [15, 22],
+                medForceRange: [12, 20],
+                observation: "",
+                forcesData: null,
+                modified: false
+            },
+            {
+                id: "model2",
+                name: "VW276 PSD",
+                condition: "As-received condition",
+                date: "14/05/2025",
+                yRange: 25,
+                maxForceRange: [14, 21],
+                medForceRange: [11, 19],
+                observation: "",
+                forcesData: null,
+                modified: false
+            },
+            {
+                id: "model3",
+                name: "VW276 ND",
+                condition: "After heat aging",
+                date: "14/05/2025",
+                yRange: 20,
+                maxForceRange: [12, 18],
+                medForceRange: [10, 16],
+                observation: "",
+                forcesData: null,
+                modified: false
+            },
+            {
+                id: "model4",
+                name: "VW276 PSD",
+                condition: "After heat aging",
+                date: "14/05/2025",
+                yRange: 20,
+                maxForceRange: [11, 17],
+                medForceRange: [9, 15],
+                observation: "",
+                forcesData: null,
+                modified: false
+            },
+            {
+                id: "model5",
+                name: "VW276 ND",
+                condition: "After environmental aging",
+                date: "14/05/2025",
+                yRange: 22,
+                maxForceRange: [13, 20],
+                medForceRange: [11, 18],
+                observation: "",
+                forcesData: null,
+                modified: false
+            },
+            {
+                id: "model6",
+                name: "VW276 PSD",
+                condition: "After environmental aging",
+                date: "14/05/2025",
+                yRange: 22,
+                maxForceRange: [12, 19],
+                medForceRange: [10, 17],
+                observation: "",
+                forcesData: null,
+                modified: false
+            },
+            {
+                id: "model7",
+                name: "VW276 ND",
+                condition: "After low-temperature aging",
+                date: "14/05/2025",
+                yRange: 24,
+                maxForceRange: [14, 21],
+                medForceRange: [12, 19],
+                observation: "",
+                forcesData: null,
+                modified: false
+            },
+            {
+                id: "model8",
+                name: "VW276 PSD",
+                condition: "After low-temperature aging",
+                date: "14/05/2025",
+                yRange: 24,
+                maxForceRange: [13, 20],
+                medForceRange: [11, 18],
+                observation: "",
+                forcesData: null,
+                modified: false
+            }
+        ];
+
+        const colors = ['red', 'green', 'blue', 'cyan', 'magenta', 'brown', 'olive', 'navy', 'teal', 'purple'];
+        const measurementPoints = [30, 42, 54, 66, 78, 90];
+
+        let selectedModelId = null;
+        let preloadValue = 0;
+        let globalDate = "14/05/2025";
+        let globalAnalyst = "Lucía Herrero";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeModelCards();
+            initializeParameterEditor();
+
+            if (models.length > 0) {
+                const firstCard = document.getElementById(models[0].id);
+                if (firstCard) firstCard.click();
+            }
+        });
+
+        function applyDate2025ToAll() {
+            if (confirm('¿Cambiar fecha a 2025 en todos los modelos?')) {
+                const newDate = "14/05/2025";
+                globalDate = newDate;
+                document.getElementById('edit-global-date').value = globalDate;
+                models.forEach(m => {
+                    m.date = newDate;
+                    m.forcesData = null;
+                });
+                initializeModelCards();
+                if (selectedModelId) {
+                    document.getElementById(selectedModelId).classList.add('selected');
+                    document.getElementById('edit-date').value = newDate;
+                }
+                alert('Fecha actualizada a ' + newDate + ' en todos los modelos.');
+            }
+        }
+
+        function initializeModelCards() {
+            const div = document.getElementById('modelSelection');
+            if (!div) return;
+            div.innerHTML = '';
+
+            models.forEach(model => {
+                const card = document.createElement('div');
+                card.classList.add('model-card');
+                card.id = model.id;
+                card.innerHTML = `
+                    <h3>${model.name}</h3>
+                    <div class="model-meta">
+                        <span><strong>Acondicionamiento:</strong> ${model.condition}</span>
+                        <span><strong>Fecha:</strong> ${model.date}</span>
+                        ${model.modified ? '<span style="color:#ca3542;font-weight:bold;">Modificado</span>' : ''}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedModelId = model.id;
+                    showParameterEditor(model.id);
+                    document.getElementById('previewContainer').style.display = 'none';
+                });
+
+                div.appendChild(card);
+            });
+        }
+
+        function initializeParameterEditor() {
+            const editor = document.getElementById('parameterEditor');
+            if (!editor) return;
+            editor.style.display = 'block';
+
+            document.getElementById('edit-global-date').value = globalDate;
+            document.getElementById('edit-global-analyst').value = globalAnalyst;
+
+            ['date', 'analyst'].forEach(field => {
+                const input = document.getElementById(`edit-global-${field}`);
+                if (input) {
+                    input.addEventListener('change', function() {
+                        if (field === 'date') globalDate = this.value;
+                        else if (field === 'analyst') globalAnalyst = this.value;
+                    });
+                }
+            });
+        }
+
+        function showParameterEditor(modelId) {
+            const model = models.find(m => m.id === modelId);
+            if (!model) return;
+
+            document.getElementById('edit-name').value = model.name;
+            document.getElementById('edit-date').value = model.date;
+            document.getElementById('edit-condition').value = model.condition;
+            document.getElementById('edit-yRange').value = model.yRange;
+            document.getElementById('edit-observation').value = model.observation;
+            document.getElementById('edit-maxForceMin').value = model.maxForceRange[0];
+            document.getElementById('edit-maxForceMax').value = model.maxForceRange[1];
+            document.getElementById('edit-medForceMin').value = model.medForceRange[0];
+            document.getElementById('edit-medForceMax').value = model.medForceRange[1];
+        }
+
+        async function saveParameters() {
+            if (!selectedModelId) return;
+            const model = models.find(m => m.id === selectedModelId);
+            if (!model) return;
+
+            model.name = document.getElementById('edit-name').value;
+            model.date = document.getElementById('edit-date').value;
+            model.condition = document.getElementById('edit-condition').value;
+            model.yRange = parseFloat(document.getElementById('edit-yRange').value);
+            model.observation = document.getElementById('edit-observation').value;
+            model.maxForceRange = [
+                parseFloat(document.getElementById('edit-maxForceMin').value),
+                parseFloat(document.getElementById('edit-maxForceMax').value)
+            ];
+            model.medForceRange = [
+                parseFloat(document.getElementById('edit-medForceMin').value),
+                parseFloat(document.getElementById('edit-medForceMax').value)
+            ];
+            model.modified = true;
+            model.forcesData = null;
+
+            const newGlobalDate = document.getElementById('edit-global-date').value;
+            if (newGlobalDate !== globalDate) {
+                globalDate = newGlobalDate;
+            }
+
+            globalAnalyst = document.getElementById('edit-global-analyst').value;
+
+            initializeModelCards();
+            if (selectedModelId) document.getElementById(selectedModelId).classList.add('selected');
+
+            const previewContainer = document.getElementById('previewContainer');
+            if (previewContainer.style.display !== 'none') {
+                alert('Parámetros guardados. Regenerando vista previa...');
+                await showPreview();
+            } else {
+                alert('Parámetros guardados correctamente. Haga clic en "Previsualizar informe" para ver los cambios.');
+            }
+        }
+
+        function resetParameters() {
+            alert('Función de reseteo no implementada en esta versión optimizada.');
+        }
+
+        function applyPreload() {
+            const input = document.getElementById('preload-value');
+            const val = parseFloat(input.value.replace(',', '.'));
+            if (!isNaN(val)) {
+                preloadValue = val;
+                input.value = val.toFixed(2).replace('.', ',');
+                models.forEach(m => m.forcesData = null);
+                if (selectedModelId) showPreview();
+                alert('Precarga aplicada: ' + val.toFixed(2) + ' N');
+            } else {
+                input.value = preloadValue.toFixed(2).replace('.', ',');
+                alert('Valor no válido.');
+            }
+        }
+
+        async function showPreview() {
+            if (!selectedModelId) {
+                alert('Seleccione un modelo primero.');
+                return;
+            }
+
+            showLoading('Generando vista previa...');
+
+            try {
+                const previewContainer = document.getElementById('previewContainer');
+                previewContainer.innerHTML = '<div class="preview-title">Vista previa del informe (haga clic en F media/F max para editar)</div>';
+                previewContainer.style.display = 'none';
+
+                const pages = await generateReport(selectedModelId);
+                if (!pages || pages.length === 0) throw new Error('No se generaron páginas');
+
+                pages.forEach(page => previewContainer.appendChild(page));
+                previewContainer.style.display = 'block';
+
+                setupEditableCells();
+
+                setTimeout(() => {
+                    previewContainer.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+
+            } catch (error) {
+                console.error('Error en preview:', error);
+                alert('Error al generar vista previa: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function setupEditableCells() {
+            const cells = document.querySelectorAll('#previewContainer .editable-cell');
+            cells.forEach(cell => {
+                cell.onclick = function() {
+                    const idx = parseInt(this.getAttribute('data-index'));
+                    const type = this.getAttribute('data-type');
+                    const model = models.find(m => m.id === selectedModelId);
+                    if (!model || !model.forcesData) return;
+
+                    if (type === 'med' || type === 'max') {
+                        const current = type === 'med' ? model.forcesData.medValuesTotal[idx] : model.forcesData.maxValuesTotal[idx];
+                        const rangeInfo = type === 'med'
+                            ? `(Rango permitido: ${model.medForceRange[0].toFixed(2)} - ${model.medForceRange[1].toFixed(2)} N)`
+                            : `(Rango permitido: ${model.maxForceRange[0].toFixed(2)} - ${model.maxForceRange[1].toFixed(2)} N)`;
+
+                        const newVal = prompt(`Nuevo valor para ${type === 'med' ? 'F media' : 'F máx'} de la probeta ${idx+1}\n${rangeInfo}:`, current.toFixed(2));
+
+                        if (newVal !== null) {
+                            let parsed = parseFloat(newVal.replace(',', '.'));
+                            if (!isNaN(parsed) && parsed >= 0) {
+                                const range = type === 'med' ? model.medForceRange : model.maxForceRange;
+                                if (parsed < range[0]) {
+                                    alert(`Valor ajustado al mínimo permitido: ${range[0].toFixed(2)} N`);
+                                    parsed = range[0];
+                                } else if (parsed > range[1]) {
+                                    alert(`Valor ajustado al máximo permitido: ${range[1].toFixed(2)} N`);
+                                    parsed = range[1];
+                                }
+
+                                if (type === 'med') {
+                                    model.forcesData.medValuesTotal[idx] = parsed;
+                                } else {
+                                    model.forcesData.maxValuesTotal[idx] = parsed;
+                                }
+
+                                recalculateCurve(idx, type);
+                                updatePreviewTable();
+                                updateStatistics();
+                                redrawPreviewGraph();
+                            }
+                        }
+                    }
+                };
+            });
+        }
+
+        function recalculateCurve(idx, changedType) {
+            const model = models.find(m => m.id === selectedModelId);
+            if (!model || !model.forcesData) return;
+
+            const targetMed = model.forcesData.medValuesTotal[idx];
+            const targetMax = model.forcesData.maxValuesTotal[idx];
+
+            const n = 800;
+            const curveData = generateCurveData(idx, targetMed, targetMax, n, model);
+            model.forcesData.curves[idx] = curveData;
+
+            for (let j = 0; j < measurementPoints.length; j++) {
+                const pointMm = measurementPoints[j];
+                const value = getValueAtPoint(curveData, pointMm);
+                model.forcesData.valuesAtPoints[idx][j] = value;
+            }
+
+            const valuesFrom25mm = curveData.filter(d => d.x >= 25).map(d => d.y);
+            const actualMed = valuesFrom25mm.reduce((a,b) => a+b, 0) / valuesFrom25mm.length;
+            model.forcesData.medValuesTotal[idx] = actualMed;
+
+            const allYValues = curveData.map(d => d.y);
+            const actualMax = Math.max(...allYValues);
+            model.forcesData.maxValuesTotal[idx] = actualMax;
+        }
+
+        function updatePreviewTable() {
+            const model = models.find(m => m.id === selectedModelId);
+            if (!model || !model.forcesData) return;
+
+            const table = document.querySelector('#previewContainer .results-table');
+            if (!table) return;
+
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < measurementPoints.length; j++) {
+                    const cell = table.querySelector(`tr[data-probe="${i}"] td[data-point="${j}"]`);
+                    if (cell) {
+                        const value = model.forcesData.valuesAtPoints[i][j];
+                        cell.textContent = value.toFixed(2).replace('.', ',');
+                    }
+                }
+
+                const medCell = table.querySelector(`tr[data-probe="${i}"] .editable-cell[data-type="med"]`);
+                const maxCell = table.querySelector(`tr[data-probe="${i}"] .editable-cell[data-type="max"]`);
+                if (medCell) medCell.textContent = model.forcesData.medValuesTotal[i].toFixed(2).replace('.', ',');
+                if (maxCell) maxCell.textContent = model.forcesData.maxValuesTotal[i].toFixed(2).replace('.', ',');
+            }
+        }
+
+        function updateStatistics() {
+            const model = models.find(m => m.id === selectedModelId);
+            if (!model || !model.forcesData) return;
+
+            const med = model.forcesData.medValuesTotal;
+            const max = model.forcesData.maxValuesTotal;
+
+            const meanMed = med.reduce((a,b) => a+b, 0) / med.length;
+            const stdMed = Math.sqrt(med.reduce((a,b) => a + Math.pow(b-meanMed,2), 0) / med.length);
+            const coefMed = (stdMed/meanMed) * 100;
+            const minMed = Math.min(...med);
+            const maxMed = Math.max(...med);
+
+            const meanMax = max.reduce((a,b) => a+b, 0) / max.length;
+            const stdMax = Math.sqrt(max.reduce((a,b) => a + Math.pow(b-meanMax,2), 0) / max.length);
+            const coefMax = (stdMax/meanMax) * 100;
+            const minMax = Math.min(...max);
+            const maxMax = Math.max(...max);
+
+            const cells = document.querySelectorAll('#previewContainer .stats-table td');
+            if (cells[1]) cells[1].textContent = meanMed.toFixed(2).replace('.', ',');
+            if (cells[2]) cells[2].textContent = meanMax.toFixed(2).replace('.', ',');
+            if (cells[4]) cells[4].textContent = stdMed.toFixed(2).replace('.', ',');
+            if (cells[5]) cells[5].textContent = stdMax.toFixed(2).replace('.', ',');
+            if (cells[7]) cells[7].textContent = coefMed.toFixed(2).replace('.', ',');
+            if (cells[8]) cells[8].textContent = coefMax.toFixed(2).replace('.', ',');
+            if (cells[10]) cells[10].textContent = minMed.toFixed(2).replace('.', ',');
+            if (cells[11]) cells[11].textContent = minMax.toFixed(2).replace('.', ',');
+            if (cells[13]) cells[13].textContent = maxMed.toFixed(2).replace('.', ',');
+            if (cells[14]) cells[14].textContent = maxMax.toFixed(2).replace('.', ',');
+        }
+
+        function redrawPreviewGraph() {
+            const model = models.find(m => m.id === selectedModelId);
+            if (!model || !model.forcesData) return;
+
+            const canvas = document.querySelector('#previewContainer canvas');
+            if (canvas) {
+                drawGraph(canvas, model);
+            }
+        }
+
+        async function generateSelectedReport() {
+            if (!selectedModelId) {
+                alert('Seleccione un modelo primero.');
+                return;
+            }
+            await generatePDF(selectedModelId);
+        }
+
+        async function generatePDF(modelId) {
+            showLoading('Generando PDF...');
+
+            try {
+                if (typeof window.jspdf === 'undefined') throw new Error('jsPDF no está cargado');
+
+                const container = document.getElementById('pdfContainer');
+                container.innerHTML = '';
+
+                const pages = await generateReport(modelId);
+                if (!pages || pages.length === 0) throw new Error('No se generaron páginas');
+
+                pages.forEach(p => container.appendChild(p));
+                await new Promise(r => setTimeout(r, 2000));
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'pt', 'a4');
+
+                for (let i = 0; i < pages.length; i++) {
+                    updateLoading(`Capturando página ${i + 1}/${pages.length}...`);
+
+                    const canvas = await html2canvas(pages[i], {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        logging: false
+                    });
+
+                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                    if (i > 0) doc.addPage();
+                    doc.addImage(imgData, 'JPEG', 0, 0, 595.28, 841.89);
+                }
+
+                const model = models.find(m => m.id === modelId);
+                const filename = `VW276_${model.name.replace(/\s+/g, '_')}_${model.condition.replace(/\s+/g, '_')}_${model.date.replace(/\//g, '-')}.pdf`;
+                doc.save(filename);
+
+                container.innerHTML = '';
+                alert('PDF generado: ' + filename);
+
+            } catch (error) {
+                console.error('Error PDF:', error);
+                alert('Error generando PDF: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function generateAllReports() {
+            showLoading('Generando todos los PDFs...');
+
+            try {
+                if (typeof window.jspdf === 'undefined') throw new Error('jsPDF no está cargado');
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'pt', 'a4');
+                let isFirst = true;
+
+                for (const model of models) {
+                    updateLoading(`Procesando ${model.name} - ${model.condition}...`);
+
+                    const container = document.getElementById('pdfContainer');
+                    container.innerHTML = '';
+
+                    const pages = await generateReport(model.id);
+                    pages.forEach(p => container.appendChild(p));
+                    await new Promise(r => setTimeout(r, 2000));
+
+                    for (let i = 0; i < pages.length; i++) {
+                        const canvas = await html2canvas(pages[i], {
+                            scale: 2,
+                            backgroundColor: '#ffffff',
+                            logging: false
+                        });
+
+                        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                        if (!isFirst) doc.addPage();
+                        else isFirst = false;
+                        doc.addImage(imgData, 'JPEG', 0, 0, 595.28, 841.89);
+                    }
+                }
+
+                doc.save('VW276_Informes_Completos.pdf');
+                document.getElementById('pdfContainer').innerHTML = '';
+                alert('Todos los PDFs generados.');
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function generateCurveData(idx, targetMed, targetMax, numPoints, model) {
+            const curveData = [];
+            const pAmp = 0.1 + Math.random() * 0.1;
+            const pFreq = 0.7 + Math.random() * 0.3;
+            const nStr = 0.2 + Math.random() * 0.1;
+            const riseEnd = Math.floor(numPoints * 0.2);
+
+            const hasPreload = preloadValue > 0;
+            const preload = hasPreload ? preloadValue : 0;
+
+            const startMm = 25;
+            const endMm = 100;
+            const startIdx = Math.floor((startMm / 100) * numPoints);
+            const numPointsAfter25 = numPoints - startIdx;
+
+            let targetAfterPeak;
+            if (startIdx > riseEnd) {
+                targetAfterPeak = targetMed;
+            } else {
+                const pointsInRise = riseEnd - startIdx;
+                const avgInRise = targetMax * 0.7;
+                targetAfterPeak = (numPointsAfter25 * targetMed - pointsInRise * avgInRise) / (numPointsAfter25 - pointsInRise);
+            }
+
+            let lastTrend = 0;
+
+            for (let i = 0; i < numPoints; i++) {
+                const xMm = (i / numPoints) * 100;
+                let yVal;
+
+                if (i <= riseEnd) {
+                    if (hasPreload && preload > 0) {
+                        const prog = i / riseEnd;
+                        const pCurve = preload/targetMax + (1 - preload/targetMax) * Math.pow(prog, 0.8 + idx*0.03);
+                        let base = pCurve * targetMax;
+                        const n1 = (Math.random()-0.5) * targetMax * 0.015 * prog;
+                        const n2 = Math.sin(i*2.5*pFreq) * targetMax * 0.005 * prog;
+                        const n3 = Math.cos(i*0.8*pFreq) * targetMax * 0.008 * prog;
+                        yVal = Math.max(preload, base + n1 + n2 + n3);
+                    } else {
+                        const prog = i / riseEnd;
+                        const pCurve = Math.pow(prog, 1.1 + idx*0.05);
+                        let base = pCurve * targetMax;
+                        const n1 = (Math.random()-0.5) * targetMax * 0.015 * prog;
+                        const n2 = Math.sin(i*2.5*pFreq) * targetMax * 0.005 * prog;
+                        const n3 = Math.cos(i*0.8*pFreq) * targetMax * 0.008 * prog;
+                        yVal = Math.max(0, base + n1 + n2 + n3);
+                    }
+                } else {
+                    const nPos = (i - riseEnd) / (numPoints - riseEnd);
+                    const decayProgress = Math.pow(nPos, 0.4);
+                    let base = targetMax + (targetAfterPeak - targetMax) * decayProgress;
+
+                    const fA = Math.sin(i*0.02*pFreq) * targetMed * 0.12 * pAmp;
+                    const fB = Math.sin(i*0.2*pFreq) * targetMed * 0.06 * pAmp;
+                    const fC = Math.cos(i*0.05*pFreq) * targetMed * 0.08 * pAmp;
+                    const nA = (Math.random()-0.5) * targetMed * 0.15 * nStr;
+                    const nB = (Math.random()-0.5) * targetMed * 0.08 * nStr;
+
+                    lastTrend = lastTrend*0.95 + (Math.random()-0.5)*0.1;
+                    const trend = lastTrend * targetMed * 0.15;
+
+                    yVal = base + fA + fB + fC + nA + nB + trend;
+
+                    if (hasPreload && preload > 0) {
+                        yVal = Math.max(preload*0.5, Math.min(targetMax*1.05, yVal));
+                    } else {
+                        yVal = Math.max(0, Math.min(targetMax*1.05, yVal));
+                    }
+                }
+
+                curveData.push({ x: xMm, y: yVal });
+            }
+
+            return curveData;
+        }
+
+        function getValueAtPoint(curveData, targetMm) {
+            let closest = curveData[0];
+            let minDiff = Math.abs(curveData[0].x - targetMm);
+
+            for (let i = 1; i < curveData.length; i++) {
+                const diff = Math.abs(curveData[i].x - targetMm);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closest = curveData[i];
+                }
+            }
+
+            return closest.y;
+        }
+
+        async function generateReport(modelId) {
+            const model = models.find(m => m.id === modelId);
+            if (!model) return null;
+
+            const randomize = document.getElementById('randomizeData').checked;
+            const randomizeCurves = document.getElementById('randomizeCurves').checked;
+
+            if (!model.forcesData || randomize) {
+                const n = 800;
+                let medValsTotal = [];
+                let maxValsTotal = [];
+                let curves = [];
+                let valuesAtPoints = [];
+
+                for (let i = 0; i < 10; i++) {
+                    let maxVal, medVal;
+
+                    if (randomize) {
+                        let maxIdx = randomizeCurves ? Math.floor(Math.random() * 10) : 0;
+
+                        if (i === maxIdx) {
+                            maxVal = randomInRange(model.maxForceRange[0] + (model.maxForceRange[1] - model.maxForceRange[0]) * 0.7, model.maxForceRange[1]);
+                            medVal = randomInRange(model.medForceRange[0] + (model.medForceRange[1] - model.medForceRange[0]) * 0.7, model.medForceRange[1]);
+                        } else {
+                            maxVal = randomInRange(model.maxForceRange[0], model.maxForceRange[0] + (model.maxForceRange[1] - model.maxForceRange[0]) * 0.8);
+                            medVal = randomInRange(model.medForceRange[0], model.medForceRange[0] + (model.medForceRange[1] - model.medForceRange[0]) * 0.8);
+                        }
+                    } else {
+                        maxVal = model.maxForceRange[0] + (model.maxForceRange[1] - model.maxForceRange[0]) * 0.65;
+                        medVal = model.medForceRange[0] + (model.medForceRange[1] - model.medForceRange[0]) * 0.65;
+                    }
+
+                    if (medVal >= maxVal) {
+                        medVal = maxVal * 0.75;
+                    }
+
+                    const curveData = generateCurveData(i, medVal, maxVal, n, model);
+                    curves.push(curveData);
+
+                    const pointValues = [];
+                    for (const pointMm of measurementPoints) {
+                        const value = getValueAtPoint(curveData, pointMm);
+                        pointValues.push(value);
+                    }
+                    valuesAtPoints.push(pointValues);
+
+                    const valuesFrom25mm = curveData.filter(d => d.x >= 25).map(d => d.y);
+                    let actualMed = valuesFrom25mm.reduce((a,b) => a+b, 0) / valuesFrom25mm.length;
+
+                    const allYValues = curveData.map(d => d.y);
+                    let actualMax = Math.max(...allYValues);
+
+                    actualMed = Math.max(model.medForceRange[0], Math.min(model.medForceRange[1], actualMed));
+                    actualMax = Math.max(model.maxForceRange[0], Math.min(model.maxForceRange[1], actualMax));
+
+                    medValsTotal.push(actualMed);
+                    maxValsTotal.push(actualMax);
+                }
+
+                model.forcesData = {
+                    curves: curves,
+                    valuesAtPoints: valuesAtPoints,
+                    medValuesTotal: medValsTotal,
+                    maxValuesTotal: maxValsTotal,
+                    hasPreload: preloadValue > 0,
+                    preloadValue: preloadValue
+                };
+            }
+
+            const pages = [];
+
+            const p1 = document.createElement('div');
+            p1.className = 'informe';
+
+            let tableHTML = `
+                <tr>
+                    <th>Leyenda</th>
+                    <th>Nr</th>
+                    <th>Sub</th>`;
+
+            for (const mm of measurementPoints) {
+                tableHTML += `<th>F@${mm}mm<br>(N)</th>`;
+            }
+            tableHTML += `<th>F max<br>(N)</th><th>F media<br>(N)</th></tr>`;
+
+            for (let i = 0; i < 10; i++) {
+                tableHTML += `
+                    <tr data-probe="${i}">
+                        <td><div class="color-box" style="background-color: ${colors[i]};"></div></td>
+                        <td>${i+1}</td>
+                        <td>${i < 5 ? '1' : '2'}</td>`;
+
+                for (let j = 0; j < measurementPoints.length; j++) {
+                    const value = model.forcesData.valuesAtPoints[i][j];
+                    tableHTML += `<td data-point="${j}">${value.toFixed(2).replace('.', ',')}</td>`;
+                }
+
+                tableHTML += `
+                        <td class="editable-cell" data-index="${i}" data-type="max">${model.forcesData.maxValuesTotal[i].toFixed(2).replace('.', ',')}</td>
+                        <td class="editable-cell" data-index="${i}" data-type="med">${model.forcesData.medValuesTotal[i].toFixed(2).replace('.', ',')}</td>
+                    </tr>`;
+            }
+
+            p1.innerHTML = `
+                <div class="header-line"></div>
+                <div class="footer-line"></div>
+                <div class="title">VW276 Test Report</div>
+                <div class="page-number">Página 1/2</div>
+
+                <div class="section-title" style="top: 171px; left: 85px;">Tabla parámetros:</div>
+                <table class="table-params">
+                    <tr><td>Nombre de la empresa :</td><td>GRUPO ANTOLIN EUROTRIM</td></tr>
+                    <tr><td>Cliente</td><td>: VOLKSWAGEN</td></tr>
+                    <tr><td>Ensayo</td><td>: DIN 53357</td></tr>
+                    <tr><td>Producto</td><td>: ${model.name}</td></tr>
+                    <tr><td>Acondicionamiento</td><td>: ${model.condition}</td></tr>
+                    <tr><td>Analista</td><td>: ${globalAnalyst}</td></tr>
+                    <tr><td>Fecha</td><td>: ${model.date}</td></tr>
+                    <tr><td>Series</td><td>: Serie1: Longitudinal. Serie 2:Transversal.</td></tr>
+                    <tr><td>Mordazas</td><td>: Distancia entre mordazas 100m</td></tr>
+                    ${model.observation ? `<tr><td>Observación</td><td>: ${model.observation.replace(/\n/g, '<br>&nbsp;&nbsp;')}</td></tr>` : ''}
+                </table>
+
+                <div class="section-title section-results">Resultados:</div>
+                <table class="results-table">
+                    ${tableHTML}
+                </table>
+
+                <div class="graph-title">Gráfico Serie:</div>
+                <canvas class="graph-container" width="600" height="300"></canvas>
+
+                <div class="x-label">Alargamiento en mm</div>
+                <div class="y-label">Fuerza en N</div>
+            `;
+            pages.push(p1);
+
+            const canvas = p1.querySelector('canvas');
+            if (canvas) await drawGraph(canvas, model);
+
+            const med = model.forcesData.medValuesTotal;
+            const max = model.forcesData.maxValuesTotal;
+
+            const meanMed = med.reduce((a,b) => a+b, 0) / med.length;
+            const stdMed = Math.sqrt(med.reduce((a,b) => a + Math.pow(b-meanMed,2), 0) / med.length);
+            const coefMed = (stdMed/meanMed) * 100;
+            const minMed = Math.min(...med);
+            const maxMed = Math.max(...med);
+
+            const meanMax = max.reduce((a,b) => a+b, 0) / max.length;
+            const stdMax = Math.sqrt(max.reduce((a,b) => a + Math.pow(b-meanMax,2), 0) / max.length);
+            const coefMax = (stdMax/meanMax) * 100;
+            const minMax = Math.min(...max);
+            const maxMax = Math.max(...max);
+
+            const p2 = document.createElement('div');
+            p2.className = 'informe';
+            p2.innerHTML = `
+                <div class="header-line"></div>
+                <div class="footer-line"></div>
+                <div class="title">VW276 Test Report</div>
+                <div class="page-number">Página 2/2</div>
+
+                <div class="section-title" style="top: 171px; left: 85px;">Estadística:</div>
+                <table class="stats-table">
+                    <tr><th colspan="3">Serie</th></tr>
+                    <tr><th>n = 10</th><th>F max N</th><th>Fmedia N</th></tr>
+                    <tr><td>n</td><td>10</td><td>10</td></tr>
+                    <tr><td>x</td><td>${meanMax.toFixed(2).replace('.', ',')}</td><td>${meanMed.toFixed(2).replace('.', ',')}</td></tr>
+                    <tr><td>s</td><td>${stdMax.toFixed(2).replace('.', ',')}</td><td>${stdMed.toFixed(2).replace('.', ',')}</td></tr>
+                    <tr><td>v</td><td>${coefMax.toFixed(2).replace('.', ',')}</td><td>${coefMed.toFixed(2).replace('.', ',')}</td></tr>
+                    <tr><td>min</td><td>${minMax.toFixed(2).replace('.', ',')}</td><td>${minMed.toFixed(2).replace('.', ',')}</td></tr>
+                    <tr><td>max</td><td>${maxMax.toFixed(2).replace('.', ',')}</td><td>${maxMed.toFixed(2).replace('.', ',')}</td></tr>
+                </table>
+            `;
+            pages.push(p2);
+
+            return pages;
+        }
+
+        function drawGraph(canvas, model) {
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const w = 600, h = 300, pad = 40;
+            const gw = w - pad*2, gh = h - pad*2;
+            const ox = pad, oy = h - pad;
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(ox, oy);
+            ctx.lineTo(ox + gw, oy);
+            ctx.moveTo(ox, oy);
+            ctx.lineTo(ox, oy - gh);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 0.5;
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath();
+
+            for (let i = 1; i <= 3; i++) {
+                const y = oy - (i * gh / 3);
+                ctx.moveTo(ox, y);
+                ctx.lineTo(ox + gw, y);
+            }
+
+            for (let i = 1; i <= 5; i++) {
+                const x = ox + (i * gw / 5);
+                ctx.moveTo(x, oy);
+                ctx.lineTo(x, oy - gh);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.font = '10px Arial';
+            ctx.fillStyle = 'black';
+
+            for (let i = 0; i <= 5; i++) {
+                const x = ox + (i * gw / 5);
+                ctx.textAlign = 'center';
+                ctx.fillText((i * 20).toString(), x, oy + 13);
+            }
+
+            for (let i = 0; i <= 3; i++) {
+                const y = oy - (i * gh / 3);
+                const yVal = Math.round((i * (model.yRange / 3)) * 100) / 100;
+                ctx.textAlign = 'right';
+                ctx.fillText(yVal.toString(), ox - 5, y + 3);
+            }
+
+            for (let idx = 0; idx < 10; idx++) {
+                const curveData = model.forcesData.curves[idx];
+                ctx.beginPath();
+                ctx.strokeStyle = colors[idx];
+                ctx.lineWidth = 1.25;
+
+                for (let i = 0; i < curveData.length; i++) {
+                    const xMm = curveData[i].x;
+                    const yVal = curveData[i].y;
+
+                    const x = ox + (xMm / 100) * gw;
+                    const y = oy - (yVal * gh / model.yRange);
+
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+
+                ctx.stroke();
+            }
+        }
+
+        function randomInRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingIndicator').style.display = 'flex';
+        }
+
+        function updateLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
