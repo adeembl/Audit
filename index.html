@@ -25,12 +25,292 @@
     .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
     .row .col { display: inline-flex; flex-direction: column; }
     .sublabel { display:block; font-weight:bold; margin-top:4px; }
-    @media (max-width: 640px){ input[type="text"], input[type="date"], input[type="time"], select { width: 100%; } }
+
+    /* Dashboard Económico - Estilos del Carrusel */
+    .economic-dashboard {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 15px;
+      padding: 30px;
+      margin: 20px 0 30px 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .dashboard-header {
+      text-align: center;
+      color: white;
+      margin-bottom: 20px;
+    }
+    .dashboard-header h2 {
+      background: transparent;
+      color: white;
+      font-size: 28px;
+      margin: 0 0 10px 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .carousel-container {
+      position: relative;
+      width: 100%;
+      height: 500px;
+      overflow: hidden;
+    }
+    .carousel-slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .carousel-slide.active {
+      opacity: 1;
+      z-index: 1;
+    }
+    .slide-title {
+      text-align: center;
+      color: #667eea;
+      font-size: 24px;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+    }
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .stat-trend {
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-top: 20px;
+    }
+    .carousel-indicators {
+      text-align: center;
+      margin-top: 15px;
+    }
+    .indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+      margin: 0 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .indicator.active {
+      background: white;
+      width: 30px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 640px){
+      input[type="text"], input[type="date"], input[type="time"], select { width: 100%; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .carousel-container { height: 600px; }
+    }
   </style>
 </head>
 <body>
 
   <h1 id="titulo">FLASH AUDIT - Proceso Línea <span id="lineaTitulo">3</span></h1>
+
+  <!-- Dashboard Económico con Carrusel Automático -->
+  <div class="economic-dashboard">
+    <div class="dashboard-header">
+      <h2>📊 Dashboard Económico - Análisis en Tiempo Real</h2>
+      <p style="color: rgba(255,255,255,0.9); margin: 0;">Estadísticas actualizadas | Rotación automática cada 5 segundos</p>
+    </div>
+
+    <div class="carousel-container">
+      <!-- Slide 1: KPIs Principales -->
+      <div class="carousel-slide active" data-slide="0">
+        <div class="slide-title">📈 Indicadores Clave de Rendimiento (KPIs)</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Producción Diaria</div>
+            <div class="stat-value">1,247</div>
+            <div class="stat-trend">↑ +8.3% vs ayer</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Eficiencia Global (OEE)</div>
+            <div class="stat-value">87.5%</div>
+            <div class="stat-trend">↑ +2.1% este mes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Coste por Unidad</div>
+            <div class="stat-value">€24.80</div>
+            <div class="stat-trend">↓ -3.2% optimizado</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Calidad (FTQ)</div>
+            <div class="stat-value">96.2%</div>
+            <div class="stat-trend">↑ +1.5% mejorado</div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="kpiChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Slide 2: Costes Operativos -->
+      <div class="carousel-slide" data-slide="1">
+        <div class="slide-title">💰 Análisis de Costes Operativos</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Mano de Obra</div>
+            <div class="stat-value">€12,450</div>
+            <div class="stat-trend">45% del total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Materiales</div>
+            <div class="stat-value">€9,820</div>
+            <div class="stat-trend">35% del total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Energía</div>
+            <div class="stat-value">€3,280</div>
+            <div class="stat-trend">12% del total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Mantenimiento</div>
+            <div class="stat-value">€2,210</div>
+            <div class="stat-trend">8% del total</div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="costChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Slide 3: Producción Semanal -->
+      <div class="carousel-slide" data-slide="2">
+        <div class="slide-title">📦 Evolución de Producción Semanal</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Meta Semanal</div>
+            <div class="stat-value">8,500</div>
+            <div class="stat-trend">Objetivo establecido</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Producción Real</div>
+            <div class="stat-value">8,847</div>
+            <div class="stat-trend">↑ +4.1% sobre meta</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Unidades Defectuosas</div>
+            <div class="stat-value">334</div>
+            <div class="stat-trend">3.8% del total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tiempo Ciclo Prom.</div>
+            <div class="stat-value">4.2 min</div>
+            <div class="stat-trend">↓ -0.3 min optimizado</div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="productionChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Slide 4: Rentabilidad -->
+      <div class="carousel-slide" data-slide="3">
+        <div class="slide-title">💹 Análisis de Rentabilidad</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Ingresos Mensuales</div>
+            <div class="stat-value">€142,300</div>
+            <div class="stat-trend">↑ +12.5% vs mes anterior</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Costes Totales</div>
+            <div class="stat-value">€98,450</div>
+            <div class="stat-trend">↓ -3.8% optimizado</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Margen Bruto</div>
+            <div class="stat-value">€43,850</div>
+            <div class="stat-trend">30.8% margen</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">ROI Trimestral</div>
+            <div class="stat-value">22.4%</div>
+            <div class="stat-trend">↑ +5.2% mejorado</div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="profitChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Slide 5: Tiempo de Inactividad -->
+      <div class="carousel-slide" data-slide="4">
+        <div class="slide-title">⏱️ Análisis de Tiempos de Inactividad</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Tiempo Productivo</div>
+            <div class="stat-value">92.3%</div>
+            <div class="stat-trend">↑ +1.8% mejorado</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Paradas No Planificadas</div>
+            <div class="stat-value">4.2%</div>
+            <div class="stat-trend">↓ -0.9% reducido</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Mantenimiento Preventivo</div>
+            <div class="stat-value">2.8%</div>
+            <div class="stat-trend">Planificado</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Cambios de Turno</div>
+            <div class="stat-value">0.7%</div>
+            <div class="stat-trend">Normal</div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="downtimeChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Indicadores de navegación -->
+    <div class="carousel-indicators">
+      <span class="indicator active" onclick="goToSlide(0)"></span>
+      <span class="indicator" onclick="goToSlide(1)"></span>
+      <span class="indicator" onclick="goToSlide(2)"></span>
+      <span class="indicator" onclick="goToSlide(3)"></span>
+      <span class="indicator" onclick="goToSlide(4)"></span>
+    </div>
+  </div>
 
   <!-- Datos generales -->
   <div class="form-group">
@@ -491,8 +771,205 @@
   <!-- Librerías -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <script>
+    // ====== DASHBOARD ECONÓMICO - CARRUSEL AUTOMÁTICO ======
+    let currentSlide = 0;
+    const totalSlides = 5;
+    let autoplayInterval;
+    let charts = {};
+
+    // Función para cambiar de slide
+    function goToSlide(slideIndex) {
+      const slides = document.querySelectorAll('.carousel-slide');
+      const indicators = document.querySelectorAll('.indicator');
+
+      slides.forEach(slide => slide.classList.remove('active'));
+      indicators.forEach(indicator => indicator.classList.remove('active'));
+
+      slides[slideIndex].classList.add('active');
+      indicators[slideIndex].classList.add('active');
+
+      currentSlide = slideIndex;
+
+      // Reiniciar autoplay
+      clearInterval(autoplayInterval);
+      startAutoplay();
+    }
+
+    // Función para avanzar al siguiente slide
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % totalSlides;
+      goToSlide(currentSlide);
+    }
+
+    // Iniciar autoplay (cambia cada 5 segundos)
+    function startAutoplay() {
+      autoplayInterval = setInterval(nextSlide, 5000);
+    }
+
+    // Inicializar gráficos con Chart.js
+    function initCharts() {
+      // Gráfico 1: KPIs Principales (Línea)
+      const kpiCtx = document.getElementById('kpiChart');
+      if (kpiCtx) {
+        charts.kpi = new Chart(kpiCtx, {
+          type: 'line',
+          data: {
+            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            datasets: [{
+              label: 'Producción',
+              data: [1050, 1120, 1180, 1240, 1190, 1210, 1247],
+              borderColor: '#667eea',
+              backgroundColor: 'rgba(102, 126, 234, 0.1)',
+              tension: 0.4,
+              fill: true
+            }, {
+              label: 'OEE (%)',
+              data: [84, 85, 86, 88, 87, 86, 87.5],
+              borderColor: '#764ba2',
+              backgroundColor: 'rgba(118, 75, 162, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top' }
+            }
+          }
+        });
+      }
+
+      // Gráfico 2: Costes Operativos (Dona)
+      const costCtx = document.getElementById('costChart');
+      if (costCtx) {
+        charts.cost = new Chart(costCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Mano de Obra (45%)', 'Materiales (35%)', 'Energía (12%)', 'Mantenimiento (8%)'],
+            datasets: [{
+              data: [12450, 9820, 3280, 2210],
+              backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom' }
+            }
+          }
+        });
+      }
+
+      // Gráfico 3: Producción Semanal (Barras)
+      const productionCtx = document.getElementById('productionChart');
+      if (productionCtx) {
+        charts.production = new Chart(productionCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            datasets: [{
+              label: 'Meta',
+              data: [1200, 1200, 1200, 1200, 1200, 1200, 1200],
+              backgroundColor: 'rgba(102, 126, 234, 0.3)',
+              borderColor: '#667eea',
+              borderWidth: 2
+            }, {
+              label: 'Real',
+              data: [1240, 1280, 1310, 1290, 1250, 1230, 1247],
+              backgroundColor: 'rgba(118, 75, 162, 0.7)',
+              borderColor: '#764ba2',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top' }
+            }
+          }
+        });
+      }
+
+      // Gráfico 4: Rentabilidad (Línea con área)
+      const profitCtx = document.getElementById('profitChart');
+      if (profitCtx) {
+        charts.profit = new Chart(profitCtx, {
+          type: 'line',
+          data: {
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+            datasets: [{
+              label: 'Ingresos (€)',
+              data: [120000, 125000, 132000, 128000, 138000, 142300],
+              borderColor: '#667eea',
+              backgroundColor: 'rgba(102, 126, 234, 0.2)',
+              tension: 0.4,
+              fill: true
+            }, {
+              label: 'Costes (€)',
+              data: [85000, 87000, 92000, 89000, 95000, 98450],
+              borderColor: '#f093fb',
+              backgroundColor: 'rgba(240, 147, 251, 0.2)',
+              tension: 0.4,
+              fill: true
+            }, {
+              label: 'Margen (€)',
+              data: [35000, 38000, 40000, 39000, 43000, 43850],
+              borderColor: '#4facfe',
+              backgroundColor: 'rgba(79, 172, 254, 0.2)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top' }
+            }
+          }
+        });
+      }
+
+      // Gráfico 5: Tiempo de Inactividad (Barras horizontales)
+      const downtimeCtx = document.getElementById('downtimeChart');
+      if (downtimeCtx) {
+        charts.downtime = new Chart(downtimeCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Tiempo Productivo', 'Paradas No Planificadas', 'Mantenimiento', 'Cambios de Turno'],
+            datasets: [{
+              label: 'Porcentaje (%)',
+              data: [92.3, 4.2, 2.8, 0.7],
+              backgroundColor: ['#4facfe', '#f093fb', '#764ba2', '#667eea']
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            }
+          }
+        });
+      }
+    }
+
+    // Inicializar cuando se carga la página
+    document.addEventListener('DOMContentLoaded', function() {
+      initCharts();
+      startAutoplay();
+    });
+
+    // ====== FIN DASHBOARD ECONÓMICO ======
+
     function calcRatingAverage() {
       const ratingSelects = document.querySelectorAll('.ratingSelect');
       let sum = 0, count = 0;
