@@ -2358,6 +2358,805 @@ class API:
             print(f"Error construyendo PDF: {e}")
             return {"error": f"Error construyendo PDF: {e}", "pdf_path": None}
 
+    def generar_presentacion_html(self, fecha_inicio, fecha_fin):
+        """
+        Genera presentación HTML con las mismas diapositivas que el PDF.
+        Carrusel automático cada 5 segundos en bucle infinito.
+        Diseñado para 1920x1080 en pantalla completa.
+        """
+        try:
+            import base64
+
+            print(f"🎬 Generando presentación HTML para {fecha_inicio} — {fecha_fin}")
+
+            # Leer datos globales (igual que el PDF)
+            data_all = self.leer_estadisticas(fecha_inicio, fecha_fin, "(TODOS)", "(TODOS)")
+            if data_all.get("error"):
+                return {"error": data_all["error"], "html_content": None}
+
+            # Extraer datos
+            global_ok = data_all.get("global_total_ok", 0)
+            global_nok = data_all.get("global_total_nok", 0)
+            global_nok_prov = data_all.get("global_total_nok_prov", 0)
+            global_rew = data_all.get("global_total_rework", 0)
+
+            def_dist_nok = data_all.get("defect_distribution", {})
+            mod_dist_nok = data_all.get("models_distribution", {})
+            mod_dist_nok_prov = data_all.get("global_models_distribution_prov", {})
+            shift_dist_nok = data_all.get("shift_distribution", {})
+
+            rew_def_dist = data_all.get("rework_defect_distribution", {})
+            rew_mod_dist = data_all.get("rework_models_distribution", {})
+            rew_shift_dist = data_all.get("rework_shift_distribution", {})
+
+            costes_por_linea_turno = data_all.get("costes_por_linea_turno", {})
+            costes_globales = data_all.get("costes_globales", {})
+
+            # Función helper para convertir gráfico a base64
+            def buffer_to_base64(buf):
+                if buf is None:
+                    return ""
+                buf.seek(0)
+                img_str = base64.b64encode(buf.read()).decode()
+                return f"data:image/png;base64,{img_str}"
+
+            # Generar gráficos NOK
+            buf_ok_nok, buf_defectos, buf_modelos, buf_turnos = self._graficas_global_nok(
+                fecha_inicio, fecha_fin,
+                def_dist_nok, mod_dist_nok, shift_dist_nok, mod_dist_nok_prov
+            )
+
+            # Generar gráficos Rework
+            buf_evol_r, buf_def_r, buf_mod_r, buf_shift_r = self._graficas_global_r(
+                fecha_inicio, fecha_fin,
+                rew_def_dist, rew_mod_dist, rew_shift_dist
+            )
+
+            # Convertir a base64
+            img_ok_nok_b64 = buffer_to_base64(buf_ok_nok)
+            img_defectos_b64 = buffer_to_base64(buf_defectos)
+            img_modelos_b64 = buffer_to_base64(buf_modelos)
+            img_turnos_b64 = buffer_to_base64(buf_turnos)
+
+            img_evol_r_b64 = buffer_to_base64(buf_evol_r)
+            img_def_r_b64 = buffer_to_base64(buf_def_r)
+            img_mod_r_b64 = buffer_to_base64(buf_mod_r)
+            img_shift_r_b64 = buffer_to_base64(buf_shift_r)
+
+            # Calcular KPIs
+            total_fab = global_ok + global_nok + global_nok_prov
+            rejection_rate = (global_nok / (global_ok + global_nok) * 100) if (global_ok + global_nok) > 0 else 0
+            fecha_display = fecha_inicio if fecha_inicio == fecha_fin else f"{fecha_inicio} — {fecha_fin}"
+
+            # Obtener tendencias
+            tendencias = data_all.get("tendencias", {})
+            cambio_prod = tendencias.get("cambio_produccion_total", 0)
+            cambio_ok = tendencias.get("cambio_ok_total", 0)
+            cambio_nok = tendencias.get("cambio_nok_total", 0)
+            cambio_rew = tendencias.get("cambio_retrabajos_total", 0)
+            cambio_pct_nok = tendencias.get("cambio_porcentaje_nok", 0)
+
+            # Preparar lista de diapositivas
+            slides_html = []
+
+            # === DIAPOSITIVA 0: TENDENCIAS ===
+            def get_trend_color(val):
+                return "#10B981" if val >= 0 else "#EF4444"
+
+            def get_trend_arrow(val):
+                return "↗" if val >= 0 else "↘"
+
+            def get_trend_sign(val):
+                return "+" if val >= 0 else ""
+
+            slide_tendencias = f'''
+            <div class="slide">
+                <div class="slide-header" style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);">
+                    <h1>ANÁLISIS DE TENDENCIAS</h1>
+                    <p class="slide-subtitle">EVOLUCIÓN RESPECTO AL PERÍODO ANTERIOR</p>
+                    <p class="slide-period">Período: {fecha_display}</p>
+                </div>
+                <div class="tendencias-grid">
+                    <div class="tendencia-card">
+                        <div class="tendencia-icon" style="background: {get_trend_color(cambio_prod)};">
+                            <span style="font-size: 48px;">{get_trend_arrow(cambio_prod)}</span>
+                        </div>
+                        <div class="tendencia-label">PRODUCCIÓN TOTAL</div>
+                        <div class="tendencia-value" style="color: {get_trend_color(cambio_prod)};">
+                            {get_trend_sign(cambio_prod)}{cambio_prod:.1f}%
+                        </div>
+                        <div class="tendencia-desc">vs período anterior</div>
+                    </div>
+                    <div class="tendencia-card">
+                        <div class="tendencia-icon" style="background: {get_trend_color(cambio_ok)};">
+                            <span style="font-size: 48px;">{get_trend_arrow(cambio_ok)}</span>
+                        </div>
+                        <div class="tendencia-label">PIEZAS OK</div>
+                        <div class="tendencia-value" style="color: {get_trend_color(cambio_ok)};">
+                            {get_trend_sign(cambio_ok)}{cambio_ok:.1f}%
+                        </div>
+                        <div class="tendencia-desc">vs período anterior</div>
+                    </div>
+                    <div class="tendencia-card">
+                        <div class="tendencia-icon" style="background: {get_trend_color(-cambio_nok)};">
+                            <span style="font-size: 48px;">{get_trend_arrow(cambio_nok)}</span>
+                        </div>
+                        <div class="tendencia-label">PIEZAS NOK</div>
+                        <div class="tendencia-value" style="color: {get_trend_color(-cambio_nok)};">
+                            {get_trend_sign(cambio_nok)}{cambio_nok:.1f}%
+                        </div>
+                        <div class="tendencia-desc">vs período anterior</div>
+                    </div>
+                    <div class="tendencia-card">
+                        <div class="tendencia-icon" style="background: {get_trend_color(-cambio_rew)};">
+                            <span style="font-size: 48px;">{get_trend_arrow(cambio_rew)}</span>
+                        </div>
+                        <div class="tendencia-label">RETRABAJOS</div>
+                        <div class="tendencia-value" style="color: {get_trend_color(-cambio_rew)};">
+                            {get_trend_sign(cambio_rew)}{cambio_rew:.1f}%
+                        </div>
+                        <div class="tendencia-desc">vs período anterior</div>
+                    </div>
+                    <div class="tendencia-card">
+                        <div class="tendencia-icon" style="background: {get_trend_color(-cambio_pct_nok)};">
+                            <span style="font-size: 48px;">{get_trend_arrow(cambio_pct_nok)}</span>
+                        </div>
+                        <div class="tendencia-label">% NOK</div>
+                        <div class="tendencia-value" style="color: {get_trend_color(-cambio_pct_nok)};">
+                            {get_trend_sign(cambio_pct_nok)}{cambio_pct_nok:.2f}pp
+                        </div>
+                        <div class="tendencia-desc">vs período anterior</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 40px; padding: 20px; background: white; border-radius: 15px; margin: 40px 80px;">
+                    <p style="font-size: 20px; color: #64748B; margin: 0;">
+                        📊 Las tendencias comparan el período actual con el período anterior de la misma duración
+                    </p>
+                </div>
+            </div>
+            '''
+            slides_html.append(slide_tendencias)
+
+            # === DIAPOSITIVA 1: NOK GLOBAL ===
+            status_color = "#EF4444" if rejection_rate > self.OBJETIVO else "#10B981"
+            status_text = "CRÍTICO" if rejection_rate > self.OBJETIVO else "ÓPTIMO"
+
+            slide1 = f'''
+            <div class="slide">
+                <div class="slide-header" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);">
+                    <h1>QUALITY DASHBOARD</h1>
+                    <p class="slide-subtitle">ANÁLISIS GLOBAL DE RECHAZOS (NOK)</p>
+                    <p class="slide-period">Período: {fecha_display} | Objetivo: ≤ {self.OBJETIVO:.1f}%</p>
+                </div>
+                <div class="slide-kpis">
+                    <div class="kpi-hero" style="background: {status_color};">
+                        <div class="kpi-label">TASA DE RECHAZO</div>
+                        <div class="kpi-value-hero">{rejection_rate:.2f}%</div>
+                        <div class="kpi-status">{status_text}</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">PRODUCCIÓN TOTAL</div>
+                        <div class="kpi-value">{total_fab:,}</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">RECHAZOS INTERNOS</div>
+                        <div class="kpi-value">{global_nok:,}</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">RECHAZOS PROVEEDOR</div>
+                        <div class="kpi-value">{global_nok_prov:,}</div>
+                    </div>
+                </div>
+                <div class="slide-charts">
+                    <div class="chart-box">
+                        <h3>Tendencia de Calidad</h3>
+                        <img src="{img_ok_nok_b64}" alt="Tendencia">
+                    </div>
+                    <div class="chart-box">
+                        <h3>Top 5 Defectos</h3>
+                        <img src="{img_defectos_b64}" alt="Defectos">
+                    </div>
+                    <div class="chart-box">
+                        <h3>Impacto por Modelo</h3>
+                        <img src="{img_modelos_b64}" alt="Modelos">
+                    </div>
+                    <div class="chart-box">
+                        <h3>Distribución por Turno</h3>
+                        <img src="{img_turnos_b64}" alt="Turnos">
+                    </div>
+                </div>
+            </div>
+            '''
+            slides_html.append(slide1)
+
+            # === DIAPOSITIVA 2: REWORK GLOBAL ===
+            slide2 = f'''
+            <div class="slide">
+                <div class="slide-header" style="background: linear-gradient(135deg, #065F46 0%, #047857 100%);">
+                    <h1>REWORK DASHBOARD</h1>
+                    <p class="slide-subtitle">ANÁLISIS GLOBAL DE RETRABAJOS</p>
+                    <p class="slide-period">Período: {fecha_display}</p>
+                </div>
+                <div class="slide-kpis">
+                    <div class="kpi-hero" style="background: #10B981;">
+                        <div class="kpi-label">TOTAL RETRABAJOS</div>
+                        <div class="kpi-value-hero">{global_rew:,}</div>
+                        <div class="kpi-status">UNIDADES RECUPERADAS</div>
+                    </div>
+                </div>
+                <div class="slide-charts">
+                    <div class="chart-box">
+                        <h3>Evolución Temporal</h3>
+                        <img src="{img_evol_r_b64}" alt="Evolución">
+                    </div>
+                    <div class="chart-box">
+                        <h3>Defectos Recuperados</h3>
+                        <img src="{img_def_r_b64}" alt="Defectos R">
+                    </div>
+                    <div class="chart-box">
+                        <h3>Modelos en Retrabajo</h3>
+                        <img src="{img_mod_r_b64}" alt="Modelos R">
+                    </div>
+                    <div class="chart-box">
+                        <h3>Distribución por Turno</h3>
+                        <img src="{img_shift_r_b64}" alt="Turnos R">
+                    </div>
+                </div>
+            </div>
+            '''
+            slides_html.append(slide2)
+
+            # === DIAPOSITIVA 3: ANÁLISIS DE COSTES (si hay datos) ===
+            if costes_por_linea_turno and costes_globales.get('total_perdidas', 0) > 0:
+                total_perdidas = costes_globales.get('total_perdidas', 0)
+                num_defectos = costes_globales.get('num_defectos', 0)
+                coste_medio = total_perdidas / num_defectos if num_defectos > 0 else 0
+
+                # Top 10 líneas/turnos por coste
+                costes_sorted = sorted(
+                    costes_por_linea_turno.items(),
+                    key=lambda x: x[1]['total_coste'],
+                    reverse=True
+                )[:10]
+
+                tabla_costes_html = ""
+                for i, ((linea, uet, turno), datos) in enumerate(costes_sorted):
+                    coste = datos['total_coste']
+                    bg_color = "#F3E8FF" if i % 2 == 0 else "white"
+                    tabla_costes_html += f'''
+                    <tr style="background: {bg_color}; border-bottom: 1px solid #E2E8F0;">
+                        <td style="padding: 15px; color: #1E293B; font-weight: 500;">{linea}</td>
+                        <td style="padding: 15px; color: #1E293B; font-weight: 500;">{uet}</td>
+                        <td style="padding: 15px; color: #1E293B; font-weight: 500;">{turno}</td>
+                        <td style="padding: 15px; text-align: right; font-weight: 700; color: #7C3AED;">€{coste:,.2f}</td>
+                    </tr>
+                    '''
+
+                slide3 = f'''
+                <div class="slide">
+                    <div class="slide-header" style="background: linear-gradient(135deg, #7C3AED 0%, #6366F1 100%);">
+                        <h1>ANÁLISIS ECONÓMICO</h1>
+                        <p class="slide-subtitle">IMPACTO DE COSTES POR DEFECTOS</p>
+                        <p class="slide-period">Período: {fecha_display}</p>
+                    </div>
+                    <div class="slide-kpis">
+                        <div class="kpi-hero" style="background: #7C3AED;">
+                            <div class="kpi-label">PÉRDIDAS TOTALES</div>
+                            <div class="kpi-value-hero">€{total_perdidas:,.2f}</div>
+                            <div class="kpi-status">ANÁLISIS ECONÓMICO</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">DEFECTOS ANALIZADOS</div>
+                            <div class="kpi-value">{num_defectos:,}</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">COSTE MEDIO</div>
+                            <div class="kpi-value">€{coste_medio:.2f}</div>
+                        </div>
+                    </div>
+                    <div style="padding: 40px 60px; background: white; border-radius: 20px; margin: 30px 80px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);">
+                        <h2 style="color: #1E293B; margin-bottom: 30px; font-size: 32px; text-align: center; border-bottom: 3px solid #7C3AED; padding-bottom: 15px;">Top 10 Líneas con Mayor Impacto Económico</h2>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 22px;">
+                            <thead>
+                                <tr style="background: #7C3AED; color: white;">
+                                    <th style="padding: 18px; text-align: left; font-weight: 700;">Línea</th>
+                                    <th style="padding: 18px; text-align: left; font-weight: 700;">UET</th>
+                                    <th style="padding: 18px; text-align: left; font-weight: 700;">Turno</th>
+                                    <th style="padding: 18px; text-align: right; font-weight: 700;">Coste Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {tabla_costes_html}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                '''
+                slides_html.append(slide3)
+
+            # === DIAPOSITIVAS DE MODELOS NOK (Top 5) ===
+            if mod_dist_nok:
+                sorted_mod_nok = sorted(mod_dist_nok.items(), key=lambda x: x[1], reverse=True)
+                top5_nok = sorted_mod_nok[:5]
+
+                for modelo, cantidad in top5_nok:
+                    # Obtener datos específicos del modelo
+                    data_modelo = self.leer_estadisticas(fecha_inicio, fecha_fin, modelo, "(TODOS)")
+
+                    if not data_modelo.get("error"):
+                        modelo_ok = data_modelo.get("total_ok", 0)
+                        modelo_nok = data_modelo.get("total_nok", 0)
+                        modelo_total = modelo_ok + modelo_nok
+                        modelo_pct = (modelo_nok / modelo_total * 100) if modelo_total > 0 else 0
+
+                        # Distribución de defectos del modelo
+                        modelo_def_dist = data_modelo.get("defect_distribution", {})
+                        def_table_html = ""
+                        for i, (defecto, cant) in enumerate(sorted(modelo_def_dist.items(), key=lambda x: x[1], reverse=True)[:5]):
+                            bg_color = "#FEE2E2" if i % 2 == 0 else "white"
+                            def_table_html += f'''
+                            <tr style="background: {bg_color}; border-bottom: 1px solid #E2E8F0;">
+                                <td style="padding: 15px; color: #1E293B; font-weight: 500;">{defecto}</td>
+                                <td style="padding: 15px; text-align: right; font-weight: 700; color: #DC2626;">{cant:,}</td>
+                            </tr>
+                            '''
+
+                        slide_modelo = f'''
+                        <div class="slide">
+                            <div class="slide-header" style="background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);">
+                                <h1>ANÁLISIS POR MODELO: {modelo}</h1>
+                                <p class="slide-subtitle">DETALLE DE RECHAZOS NOK</p>
+                                <p class="slide-period">Período: {fecha_display}</p>
+                            </div>
+                            <div class="slide-kpis">
+                                <div class="kpi-card">
+                                    <div class="kpi-label">PRODUCCIÓN</div>
+                                    <div class="kpi-value">{modelo_total:,}</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">RECHAZOS NOK</div>
+                                    <div class="kpi-value">{modelo_nok:,}</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">% NOK</div>
+                                    <div class="kpi-value">{modelo_pct:.2f}%</div>
+                                </div>
+                            </div>
+                            <div style="padding: 40px 60px; background: white; border-radius: 20px; margin: 30px 100px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);">
+                                <h2 style="color: #1E293B; margin-bottom: 30px; font-size: 36px; text-align: center; border-bottom: 3px solid #DC2626; padding-bottom: 15px;">Top 5 Defectos del Modelo</h2>
+                                <table style="width: 100%; border-collapse: collapse; font-size: 26px;">
+                                    <thead>
+                                        <tr style="background: #DC2626; color: white;">
+                                            <th style="padding: 18px; text-align: left; font-weight: 700;">Defecto</th>
+                                            <th style="padding: 18px; text-align: right; font-weight: 700;">Cantidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {def_table_html}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        '''
+                        slides_html.append(slide_modelo)
+
+            # === DIAPOSITIVAS DE MODELOS REWORK (Top 5) ===
+            if rew_mod_dist:
+                sorted_mod_r = sorted(rew_mod_dist.items(), key=lambda x: x[1], reverse=True)
+                top5_r = sorted_mod_r[:5]
+
+                for modelo, cantidad in top5_r:
+                    # Obtener datos de rework del modelo
+                    data_modelo_r = self.leer_estadisticas(fecha_inicio, fecha_fin, modelo, "(TODOS)")
+
+                    if not data_modelo_r.get("error"):
+                        modelo_rew = data_modelo_r.get("total_rework", 0)
+                        modelo_rew_def = data_modelo_r.get("rework_defect_distribution", {})
+
+                        def_r_table_html = ""
+                        for i, (defecto, cant) in enumerate(sorted(modelo_rew_def.items(), key=lambda x: x[1], reverse=True)[:5]):
+                            bg_color = "#D1FAE5" if i % 2 == 0 else "white"
+                            def_r_table_html += f'''
+                            <tr style="background: {bg_color}; border-bottom: 1px solid #E2E8F0;">
+                                <td style="padding: 15px; color: #1E293B; font-weight: 500;">{defecto}</td>
+                                <td style="padding: 15px; text-align: right; font-weight: 700; color: #10B981;">{cant:,}</td>
+                            </tr>
+                            '''
+
+                        slide_modelo_r = f'''
+                        <div class="slide">
+                            <div class="slide-header" style="background: linear-gradient(135deg, #059669 0%, #10B981 100%);">
+                                <h1>ANÁLISIS POR MODELO: {modelo}</h1>
+                                <p class="slide-subtitle">DETALLE DE RETRABAJOS</p>
+                                <p class="slide-period">Período: {fecha_display}</p>
+                            </div>
+                            <div class="slide-kpis">
+                                <div class="kpi-hero" style="background: #10B981;">
+                                    <div class="kpi-label">RETRABAJOS</div>
+                                    <div class="kpi-value-hero">{modelo_rew:,}</div>
+                                    <div class="kpi-status">UNIDADES RECUPERADAS</div>
+                                </div>
+                            </div>
+                            <div style="padding: 40px 60px; background: white; border-radius: 20px; margin: 30px 100px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);">
+                                <h2 style="color: #1E293B; margin-bottom: 30px; font-size: 36px; text-align: center; border-bottom: 3px solid #10B981; padding-bottom: 15px;">Top 5 Defectos Recuperados</h2>
+                                <table style="width: 100%; border-collapse: collapse; font-size: 26px;">
+                                    <thead>
+                                        <tr style="background: #10B981; color: white;">
+                                            <th style="padding: 18px; text-align: left; font-weight: 700;">Defecto</th>
+                                            <th style="padding: 18px; text-align: right; font-weight: 700;">Cantidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {def_r_table_html}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        '''
+                        slides_html.append(slide_modelo_r)
+
+            # === GENERAR HTML COMPLETO ===
+            html_content = f'''
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, initial-scale=1.0">
+    <title>Presentación Quality Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+
+        body {{
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0F172A;
+            overflow: hidden;
+            width: 1920px;
+            height: 1080px;
+        }}
+
+        .presentation-container {{
+            width: 1920px;
+            height: 1080px;
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .slide {{
+            width: 1920px;
+            height: 1080px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }}
+
+        .slide.active {{
+            opacity: 1;
+            transform: translateX(0);
+            z-index: 10;
+        }}
+
+        .slide.prev {{
+            opacity: 0;
+            transform: translateX(-100%);
+        }}
+
+        .slide-header {{
+            padding: 40px 60px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }}
+
+        .slide-header h1 {{
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }}
+
+        .slide-subtitle {{
+            font-size: 28px;
+            font-weight: 500;
+            opacity: 0.95;
+            margin-bottom: 8px;
+        }}
+
+        .slide-period {{
+            font-size: 22px;
+            font-weight: 400;
+            opacity: 0.85;
+        }}
+
+        .slide-kpis {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 60px;
+            flex-wrap: wrap;
+        }}
+
+        .kpi-hero {{
+            padding: 25px 45px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            min-width: 320px;
+        }}
+
+        .kpi-card {{
+            background: white;
+            padding: 20px 35px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 2px solid #E2E8F0;
+            min-width: 250px;
+        }}
+
+        .kpi-label {{
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(255,255,255,1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }}
+
+        .kpi-card .kpi-label {{
+            color: #1E293B;
+        }}
+
+        .kpi-value-hero {{
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1;
+            margin: 12px 0;
+            color: white;
+        }}
+
+        .kpi-value {{
+            font-size: 38px;
+            font-weight: 700;
+            color: #1E293B;
+            margin-top: 6px;
+        }}
+
+        .kpi-status {{
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 1;
+            margin-top: 6px;
+            color: white;
+        }}
+
+        .slide-charts {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            padding: 15px 80px 30px;
+            max-width: 1920px;
+            margin: 0 auto;
+        }}
+
+        .chart-box {{
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 2px solid #E2E8F0;
+            display: flex;
+            flex-direction: column;
+            max-height: 380px;
+        }}
+
+        .chart-box h3 {{
+            font-size: 20px;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 10px;
+            text-align: center;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 8px;
+        }}
+
+        .chart-box img {{
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+        }}
+
+        /* Estilos para diapositiva de tendencias */
+        .tendencias-grid {{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            padding: 40px 80px;
+        }}
+
+        .tendencia-card {{
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            border: 2px solid #E2E8F0;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }}
+
+        .tendencia-card:hover {{
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }}
+
+        .tendencia-icon {{
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+        }}
+
+        .tendencia-label {{
+            font-size: 16px;
+            font-weight: 700;
+            color: #1E293B;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+        }}
+
+        .tendencia-value {{
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1;
+            margin: 15px 0;
+        }}
+
+        .tendencia-desc {{
+            font-size: 14px;
+            color: #64748B;
+            font-weight: 500;
+        }}
+
+        .slide-indicator {{
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 1000;
+        }}
+
+        .indicator-dot {{
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255,255,255,0.5);
+        }}
+
+        .indicator-dot.active {{
+            background: white;
+            width: 40px;
+            border-radius: 7px;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.5);
+        }}
+
+        table {{
+            border-collapse: collapse;
+        }}
+
+        tbody tr {{
+            border-bottom: 1px solid #E2E8F0;
+        }}
+
+        tbody tr:hover {{
+            background: #F8FAFC;
+        }}
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        {"".join(slides_html)}
+    </div>
+
+    <div class="slide-indicator">
+        {''.join(f'<div class="indicator-dot {("active" if i == 0 else "")}"></div>' for i in range(len(slides_html)))}
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const indicators = document.querySelectorAll('.indicator-dot');
+        let currentSlide = 0;
+        const SLIDE_DURATION = 5000; // 5 segundos
+
+        // Mostrar primera diapositiva
+        slides[0].classList.add('active');
+
+        function nextSlide() {{
+            // Ocultar diapositiva actual
+            slides[currentSlide].classList.remove('active');
+            slides[currentSlide].classList.add('prev');
+            indicators[currentSlide].classList.remove('active');
+
+            // Calcular siguiente diapositiva (bucle infinito)
+            currentSlide = (currentSlide + 1) % slides.length;
+
+            // Mostrar siguiente diapositiva
+            slides[currentSlide].classList.remove('prev');
+            slides[currentSlide].classList.add('active');
+            indicators[currentSlide].classList.add('active');
+
+            // Limpiar clase prev de las demás
+            slides.forEach((slide, i) => {{
+                if (i !== currentSlide) {{
+                    slide.classList.remove('active');
+                    setTimeout(() => {{
+                        slide.classList.remove('prev');
+                    }}, 800);
+                }}
+            }});
+        }}
+
+        // Auto-avanzar cada 5 segundos
+        setInterval(nextSlide, SLIDE_DURATION);
+
+        // Navegación con teclado (opcional)
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'ArrowRight' || e.key === ' ') {{
+                nextSlide();
+            }} else if (e.key === 'Escape') {{
+                window.close();
+            }}
+        }});
+
+        console.log('🎬 Presentación iniciada con ' + slides.length + ' diapositivas');
+        console.log('⏱️  Duración por diapositiva: 5 segundos');
+        console.log('🔄 Modo: Bucle infinito');
+        console.log('⌨️  Teclas: Espacio/Flecha derecha = Siguiente | Escape = Salir');
+    </script>
+</body>
+</html>
+            '''
+
+            total_slides = len(slides_html)
+            print(f"✅ Presentación HTML generada exitosamente:")
+            print(f"   📊 Total de diapositivas: {total_slides}")
+            print(f"   🎬 Modo: Carrusel automático (5s por diapositiva)")
+            print(f"   🔄 Bucle: Infinito")
+            print(f"   📐 Resolución: 1920x1080")
+
+            return {
+                "error": None,
+                "html_content": html_content,
+                "total_slides": total_slides
+            }
+
+        except Exception as e:
+            print(f"❌ Error generando presentación HTML: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"error": f"Error generando presentación: {e}", "html_content": None}
+
     def _generate_placeholder_image(self, width_px=800, height_px=400, text="Sin datos disponibles"):
         """
         Genera una imagen placeholder moderna con gradiente y mejor tipografía.
