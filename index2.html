@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Antolin · Production Quality Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+  <style>
+    :root {
+      --bg-body:#f4f5f7;
+      --bg-card:#ffffff;
+      --bg-soft:#f9fafb;
+      --primary:#0f172a;
+      --accent:#00b4a6;
+      --accent-soft:rgba(0,180,166,0.12);
+      --accent-dark:#008c82;
+      --danger:#dc2626;
+      --warning:#f97316;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --radius:10px;
+      --shadow:0 8px 20px rgba(15,23,42,0.06);
+      --transition:all .2s ease;
+      --font:'Inter',system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+
+    * { box-sizing:border-box; }
+
+    body {
+      margin:0;
+      font-family:var(--font);
+      background:var(--bg-body);
+      color:var(--primary);
+    }
+
+    header {
+      background:#ffffff;
+      border-bottom:1px solid var(--border);
+      box-shadow:0 2px 6px rgba(15,23,42,0.04);
+      padding:14px 20px;
+      position:sticky;
+      top:0;
+      z-index:40;
+    }
+
+    .header-content {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:24px;
+      width:100%;
+      margin:0;
+    }
+
+    .header-left {
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .header-left img {
+      height:34px;
+      width:auto;
+    }
+
+    .header-title h1 {
+      margin:0;
+      font-size:19px;
+      font-weight:600;
+      letter-spacing:0.02em;
+      color:var(--primary);
+    }
+
+    .header-title .subtitle {
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    .header-right {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    .status-indicator {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 9px;
+      border-radius:999px;
+      background:var(--accent-soft);
+      color:var(--accent-dark);
+      font-weight:500;
+    }
+
+    .status-dot {
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:#22c55e;
+    }
+
+    .version-badge {
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      font-size:10px;
+    }
+
+    .main-container {
+      width:98%;
+      margin:12px 12px 20px;
+      padding:0;
+      display:grid;
+      grid-template-columns:300px minmax(0,1fr);
+      gap:16px;
+    }
+
+    .sidebar {
+      background:var(--bg-card);
+      border-radius:var(--radius);
+      padding:14px 12px 14px;
+      box-shadow:var(--shadow);
+      border:1px solid var(--border);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      align-self:flex-start;
+    }
+
+    .section-title {
+      margin:0 0 6px;
+      font-size:12px;
+      font-weight:600;
+      color:#111827;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+
+    .sidebar-section {
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .form-group label {
+      display:block;
+      font-size:10px;
+      font-weight:500;
+      color:var(--muted);
+      margin-bottom:3px;
+    }
+
+    input[type="date"],
+    select {
+      width:100%;
+      padding:7px 8px;
+      border-radius:7px;
+      border:1px solid var(--border);
+      font-size:10px;
+      background:#fff;
+      color:var(--primary);
+      transition:var(--transition);
+    }
+
+    select[multiple] {
+      min-height:110px;
+    }
+
+    input[type="date"]:focus,
+    select:focus {
+      border-color:var(--accent);
+      outline:none;
+      box-shadow:0 0 0 2px var(--accent-soft);
+    }
+
+    .multi-select-container {
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    .selected-items {
+      display:flex;
+      flex-wrap:wrap;
+      gap:4px;
+      min-height:18px;
+      font-size:9px;
+      color:var(--muted);
+    }
+
+    .selected-item {
+      display:flex;
+      align-items:center;
+      gap:4px;
+      padding:2px 6px;
+      background:var(--accent-soft);
+      border-radius:999px;
+      font-size:9px;
+      color:var(--accent-dark);
+    }
+
+    .remove-item {
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    .no-selection {
+      font-size:9px;
+      color:#9ca3af;
+    }
+
+    .multi-select-actions {
+      display:flex;
+      gap:6px;
+    }
+
+    .btn-mini {
+      padding:2px 7px;
+      font-size:8px;
+      border-radius:6px;
+      border:1px solid var(--border);
+      background:var(--bg-soft);
+      cursor:pointer;
+      transition:var(--transition);
+    }
+
+    .btn-mini:hover {
+      background:#e5e7eb;
+    }
+
+    .filter-search {
+      width:100%;
+      padding:5px 7px;
+      font-size:9px;
+      border-radius:6px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--primary);
+      margin-bottom:2px;
+    }
+
+    .filter-search:focus {
+      border-color:var(--accent);
+      outline:none;
+      box-shadow:0 0 0 2px var(--accent-soft);
+    }
+
+    .btn {
+      width:100%;
+      padding:7px 9px;
+      border-radius:7px;
+      border:none;
+      font-size:10px;
+      font-weight:500;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      transition:var(--transition);
+    }
+
+    .btn-primary {
+      background:var(--accent);
+      color:#fff;
+    }
+
+    .btn-primary:hover {
+      background:var(--accent-dark);
+    }
+
+    .btn-secondary {
+      background:var(--bg-soft);
+      color:#111827;
+      border:1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background:#eef2ff;
+      border-color:#c7d2fe;
+    }
+
+    .section-divider {
+      height:1px;
+      background:var(--border);
+      margin:2px 0;
+    }
+
+    .filters-indicator {
+      display:none;
+      padding:7px 8px;
+      border-radius:7px;
+      background:var(--bg-soft);
+      font-size:9px;
+      border:1px solid var(--border);
+      gap:4px;
+      flex-direction:column;
+    }
+
+    .filters-indicator.active {
+      display:flex;
+    }
+
+    .filter-tag {
+      display:inline-flex;
+      padding:2px 6px;
+      border-radius:999px;
+      background:#eef2ff;
+      font-size:8px;
+      color:#4f46e5;
+      margin-right:3px;
+    }
+
+    .content {
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      width:100%;
+    }
+
+    .content-section {
+      background:var(--bg-card);
+      border-radius:var(--radius);
+      padding:10px 10px 12px;
+      box-shadow:var(--shadow);
+      border:1px solid var(--border);
+      width:100%;
+    }
+
+    .section-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+    }
+
+    .section-header h3 {
+      margin:0;
+      font-size:13px;
+      font-weight:600;
+      color:#111827;
+    }
+
+    .active-filters-banner {
+      display:none;
+      padding:6px 8px;
+      border-radius:7px;
+      background:var(--accent-soft);
+      border:1px solid rgba(0,180,166,0.25);
+      font-size:9px;
+      gap:4px;
+      align-items:center;
+    }
+
+    .active-filters-banner.show {
+      display:flex;
+    }
+
+    .active-filter-tag {
+      display:inline-flex;
+      padding:2px 6px;
+      border-radius:999px;
+      background:#ffffff;
+      border:1px solid #d1fae5;
+      font-size:8px;
+      color:#065f46;
+      margin-right:3px;
+    }
+
+    .stats-overview {
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:6px;
+      margin-top:4px;
+    }
+
+    .stat-card {
+      background:var(--bg-soft);
+      border-radius:7px;
+      padding:6px 7px;
+      border:1px solid var(--border);
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+
+    .stat-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:8px;
+      color:var(--muted);
+    }
+
+    .stat-value {
+      font-size:14px;
+      font-weight:600;
+      color:#111827;
+    }
+
+    .stat-change {
+      font-size:8px;
+      display:flex;
+      align-items:center;
+      gap:3px;
+    }
+
+    .stat-change.positive { color:#16a34a; }
+    .stat-change.negative { color:#dc2626; }
+
+    .charts-grid {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+      width:100%;
+    }
+
+    .chart-card {
+      background:var(--bg-soft);
+      border-radius:7px;
+      padding:6px 6px 6px;
+      border:1px solid var(--border);
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      height:260px;              /* MÁS ALTA */
+    }
+
+    .chart-title {
+      font-size:9px;
+      font-weight:500;
+      color:var(--muted);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    .chart-container {
+      flex:1;
+      position:relative;
+      width:100%;
+    }
+
+    .results-table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:9px;
+      margin-top:4px;
+    }
+
+    .results-table thead {
+      background:var(--bg-soft);
+    }
+
+    .results-table th,
+    .results-table td {
+      padding:5px 6px;
+      border-bottom:1px solid var(--border);
+      text-align:left;
+      white-space:nowrap;
+    }
+
+    .results-table tbody tr {
+      cursor:pointer;
+      transition:var(--transition);
+    }
+
+    .results-table tbody tr:hover {
+      background:var(--bg-soft);
+    }
+
+    .row-alert {
+      background:#fef2f2;
+    }
+
+    .insights-container {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:6px;
+      width:100%;
+    }
+
+    .insight-card {
+      background:var(--bg-soft);
+      border-radius:7px;
+      padding:6px;
+      border:1px solid var(--border);
+      font-size:8px;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+
+    .insight-card.critico {
+      border-color:var(--danger);
+      background:#fef2f2;
+    }
+
+    .insight-card.oportunidad {
+      border-color:#22c55e;
+      background:#ecfdf5;
+    }
+
+    .insight-title {
+      font-weight:600;
+      color:#111827;
+      font-size:8px;
+    }
+
+    .insight-message { color:var(--muted); }
+    .insight-recommendation { color:#111827; }
+
+    .modal {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,0.34);
+      backdrop-filter:blur(3px);
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+    }
+
+    .modal-content {
+      background:#ffffff;
+      border-radius:10px;
+      padding:10px 10px 12px;
+      box-shadow:0 18px 40px rgba(15,23,42,0.18);
+      max-height:90vh;
+      overflow-y:auto;
+      border:1px solid var(--border);
+      width:96%;
+      max-width:1100px;
+    }
+
+    .modal-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:6px;
+    }
+
+    .modal-title {
+      margin:0;
+      font-size:13px;
+      font-weight:600;
+      color:#111827;
+    }
+
+    .btn-close {
+      border:none;
+      background:transparent;
+      font-size:18px;
+      cursor:pointer;
+      color:var(--muted);
+    }
+
+    #progressOverlay {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,0.45);
+      z-index:80;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .spinner {
+      width:30px;
+      height:30px;
+      border-radius:50%;
+      border:3px solid rgba(255,255,255,0.2);
+      border-top-color:#ffffff;
+      animation:spin .8s linear infinite;
+      margin:0 auto 8px;
+    }
+
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    .toast {
+      position:fixed;
+      top:16px;
+      right:16px;
+      background:#111827;
+      color:#fff;
+      padding:7px 11px;
+      border-radius:8px;
+      font-size:9px;
+      box-shadow:var(--shadow);
+      z-index:90;
+      opacity:0;
+      transform:translateY(-6px);
+      transition:var(--transition);
+      max-width:280px;
+    }
+
+    .toast.show { opacity:1; transform:translateY(0); }
+    .toast.success { background:#16a34a; }
+    .toast.error { background:#dc2626; }
+    .toast.info { background:#0f172a; }
+    .toast.warning { background:#f97316; }
+
+    @media(max-width:1024px){
+      .main-container {
+        grid-template-columns:1fr;
+        margin:10px;
+      }
+      .sidebar {
+        position:relative;
+        top:0;
+      }
+      .charts-grid { grid-template-columns:1fr; }
+      .stats-overview { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .insights-container { grid-template-columns:1fr; }
+      .chart-card { height:360px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Overlay carga -->
+  <div id="progressOverlay">
+    <div style="text-align:center;">
+      <div class="spinner"></div>
+      <div style="color:#ffffff;font-size:11px;font-weight:500;">Procesando datos de calidad...</div>
+    </div>
+  </div>
+
+  <!-- Modal detalle diario -->
+  <div id="dayModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="dayModalTitle" class="modal-title">Detalle diario</h3>
+        <button class="btn-close" onclick="closeDayModal()">×</button>
+      </div>
+      <div id="dayModalStats" class="stats-overview" style="margin-bottom:6px;"></div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">Top 5 defectos (NOK)</div>
+          <div class="chart-container"><canvas id="dayChartDefTop"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Top 5 modelos (NOK)</div>
+          <div class="chart-container"><canvas id="dayChartModelsTop"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Top 5 defectos (R)</div>
+          <div class="chart-container"><canvas id="dayChartRewDefTop"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">NOK por turno</div>
+          <div class="chart-container"><canvas id="dayChartShift"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal historial reportes -->
+  <div id="historialModal" class="modal">
+    <div class="modal-content" style="max-width:720px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Historial de reportes</h3>
+        <button class="btn-close" onclick="cerrarHistorial()">×</button>
+      </div>
+      <div class="form-group">
+        <input type="text" id="buscarReporteHistorial" placeholder="Buscar por nombre o fecha..." class="filter-search">
+      </div>
+      <ul id="listaReportesHistorial" style="list-style:none;padding:0;margin:0;max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;"></ul>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <div class="header-left">
+        <img src="logo2.png" alt="Antolin Logo">
+        <div class="header-title">
+          <h1>Production Quality Dashboard</h1>
+          <div class="subtitle">Industrial Quality &amp; Performance Monitor</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          System Online
+        </div>
+        <div class="version-badge">Dashboard v1.21</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div id="filtersIndicator" class="filters-indicator">
+        <div><strong>Filtros activos</strong></div>
+        <div id="activeFiltersContent"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <h2 class="section-title">Parámetros de análisis</h2>
+        <div class="form-group">
+          <label for="fechaInicio">Fecha inicio (Rango 1)</label>
+          <input type="date" id="fechaInicio">
+        </div>
+        <div class="form-group">
+          <label for="fechaFin">Fecha fin (Rango 1)</label>
+          <input type="date" id="fechaFin">
+        </div>
+        <div class="form-group">
+          <label for="fechaInicio2">Fecha inicio (Rango 2)</label>
+          <input type="date" id="fechaInicio2">
+        </div>
+        <div class="form-group">
+          <label for="fechaFin2">Fecha fin (Rango 2)</label>
+          <input type="date" id="fechaFin2">
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h2 class="section-title">Filtros de datos</h2>
+
+        <div class="form-group">
+          <label for="selectModelo">Modelos</label>
+          <div class="multi-select-container">
+            <input type="text" id="searchModelo" class="filter-search" placeholder="Buscar modelo...">
+            <div class="selected-items" id="selectedModelos">
+              <span class="no-selection">Ningún modelo seleccionado</span>
+            </div>
+            <select id="selectModelo" multiple></select>
+            <div class="multi-select-actions">
+              <button type="button" class="btn-mini" onclick="selectAllItems('modelo')">Todos</button>
+              <button type="button" class="btn-mini" onclick="clearAllItems('modelo')">Limpiar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="selectDefecto">Defectos / Causas</label>
+          <div class="multi-select-container">
+            <input type="text" id="searchDefecto" class="filter-search" placeholder="Buscar defecto...">
+            <div class="selected-items" id="selectedDefectos">
+              <span class="no-selection">Ningún defecto seleccionado</span>
+            </div>
+            <select id="selectDefecto" multiple></select>
+            <div class="multi-select-actions">
+              <button type="button" class="btn-mini" onclick="selectAllItems('defecto')">Todos</button>
+              <button type="button" class="btn-mini" onclick="clearAllItems('defecto')">Limpiar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="form-group">
+          <button class="btn btn-primary" onclick="consultar()">Analizar NOK + R</button>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-secondary" onclick="consultarComparativa()">Análisis comparativo</button>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-secondary" onclick="consultarDiaAnterior()">Día anterior</button>
+        </div>
+      </div>
+      <div class="sidebar-section">
+      <div class="form-group">
+        <button class="btn btn-secondary" onclick="modoPresentacion()" style="background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); color: white; font-weight: 600;">
+          Modo presentación
+        </button>
+      </div>
+    </div>
+
+      <div class="section-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="form-group">
+          <button class="btn btn-secondary" onclick="sacarReporte()">Generar reporte PDF</button>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-secondary" id="btnOutlook">Enviar por email</button>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-secondary" onclick="mostrarHistorial()">Historial de reportes</button>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="form-group">
+          <button class="btn btn-secondary" onclick="analizarCorrelaciones()">Análisis de correlaciones</button>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-mini" style="width:auto" onclick="limpiarFiltros()">🧹 Limpiar filtros</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Contenido -->
+    <main class="content">
+      <div id="activeFiltersBanner" class="active-filters-banner">
+        <div style="font-weight:600;font-size:8px;">ANÁLISIS FILTRADO</div>
+        <div id="filterBannerContent"></div>
+      </div>
+
+      <!-- Resumen -->
+      <div id="statsOverview" class="content-section" style="display:none;">
+        <div class="section-header" style="margin-bottom:2px;">
+          <h3>Resumen ejecutivo</h3>
+        </div>
+        <div id="statsCards" class="stats-overview"></div>
+      </div>
+
+      <!-- Resultados -->
+      <div class="content-section">
+        <div class="section-header">
+          <h3 id="resultsTitle">Resultados del análisis</h3>
+        </div>
+        <div id="contenedorResultados" style="font-size:9px;color:var(--muted);padding:8px 2px 0;">
+          <div style="text-align:center;padding:20px 0;color:var(--muted);">
+            <div style="font-size:22px;margin-bottom:6px;">Configura el análisis</div>
+            <div>Selecciona rango de fechas, filtra por modelos/defectos escribiendo en los buscadores y pulsa <strong>Analizar NOK + R</strong> o <strong>Análisis comparativo</strong>.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOK -->
+      <div id="nokSection" class="content-section" style="display:none;">
+        <div class="section-header">
+          <h3>NOK Parts Analysis</h3>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">Evolución OK vs NOK</div>
+            <div class="chart-container"><canvas id="chartOkNok"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Top 5 defectos (NOK)</div>
+            <div class="chart-container"><canvas id="chartDefectsBar"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Top 5 modelos con NOK</div>
+            <div class="chart-container"><canvas id="chartTopModels"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Distribución de defectos (NOK)</div>
+            <div class="chart-container"><canvas id="chartDonutDefects"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">NOK por turno</div>
+            <div class="chart-container"><canvas id="chartShift"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">OK vs % NOK</div>
+            <div class="chart-container"><canvas id="chartBarsLineOkNokPercent"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Retrabajos -->
+      <div id="retrabajosSection" class="content-section" style="display:none;">
+        <div class="section-header">
+          <h3>Rework Analysis</h3>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">Evolución de retrabajos</div>
+            <div class="chart-container"><canvas id="chartRewGlobal"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Top 5 defectos (R)</div>
+            <div class="chart-container"><canvas id="chartRewDefBar"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Top 5 modelos (R)</div>
+            <div class="chart-container"><canvas id="chartRewModels"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Distribución de defectos (R)</div>
+            <div class="chart-container"><canvas id="chartRewDonutDefects"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Retrabajos por turno</div>
+            <div class="chart-container"><canvas id="chartRewShift"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Detalle parcial</div>
+            <div class="chart-container"><canvas id="chartRewPartial"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparativa -->
+      <div id="comparativaSection" class="content-section" style="display:none;">
+        <div class="section-header">
+          <h3>Comparativa de períodos</h3>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title" id="chartComparativa1Title">Rango 1</div>
+            <div class="chart-container"><canvas id="chartComparativa1"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title" id="chartComparativa2Title">Rango 2</div>
+            <div class="chart-container"><canvas id="chartComparativa2"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title" id="chartComparativaDonut1Title">Defectos R1</div>
+            <div class="chart-container"><canvas id="chartComparativaDonut1"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title" id="chartComparativaDonut2Title">Defectos R2</div>
+            <div class="chart-container"><canvas id="chartComparativaDonut2"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Correlaciones -->
+      <div id="correlacionesSection" class="content-section" style="display:none;">
+        <div class="section-header">
+          <h3>Correlation & Pattern Analysis</h3>
+        </div>
+        <div id="insightsContainer" class="insights-container" style="margin-bottom:6px;"></div>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">NOK por día de la semana</div>
+            <div class="chart-container"><canvas id="chartCorrelacionDias"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">UETs más problemáticas</div>
+            <div class="chart-container"><canvas id="chartCorrelacionTurnos"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Modelos más críticos</div>
+            <div class="chart-container"><canvas id="chartCorrelacionModelos"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Defectos por impacto económico</div>
+            <div class="chart-container"><canvas id="chartCorrelacionCostes"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+<script>
+"use strict";
+
+/* ===== Mock pywebview (solo navegador) ===== */
+if (!window.pywebview) {
+  window.pywebview = {
+    api: {
+      leer_estadisticas: async (fi, ff, modelo, defecto) => {
+        const labels = ["2025-04-01","2025-04-02","2025-04-03","2025-04-04"];
+        const evo = {};
+        labels.forEach((d,i)=>{evo[d]={OK:15000+400*i,NOK:80+10*i};});
+        return {
+          error: null,
+          filtros_aplicados: {
+            modelo: modelo || "TODOS",
+            defecto: defecto || "TODOS",
+            tiene_filtros: !!(modelo || defecto),
+            descripcion_filtro: (modelo||"TODOS") + " / " + (defecto||"TODOS")
+          },
+          total_ok: 61000,
+          total_nok: 380,
+          total_nok_prov: 40,
+          total_rework: 600,
+          evolution: evo,
+          defect_distribution: {PLIEGUES:120,VIRUELA:90,BULTOS:70},
+          shift_distribution: {A:170,B:130,C:80},
+          models_distribution: {MONDEO:140,"BR46X":120,"VS20":110},
+          evolution_rework: {"2025-04-01":200,"2025-04-02":180,"2025-04-03":220,"2025-04-04":190},
+          rework_defect_distribution: {PLIEGUES:300,BULTOS:200},
+          rework_shift_distribution: {A:310,B:190,C:100},
+          rework_models_distribution: {MONDEO:250,"BR46X":200,VS20:150},
+          tendencias: {
+            cambio_produccion_total: 4.2,
+            cambio_ok_total: 3.8,
+            cambio_nok_total: -8.5,
+            cambio_retrabajos_total: 2.1,
+            cambio_porcentaje_nok: -0.12
+          }
+        };
+      },
+      generar_reporte_pdf: async (fi,ff) => {
+        return {error:null,pdf_path:"/tmp/Executive_Report_"+fi+"_"+ff+".pdf"};
+      },
+      abrir_outlook_reporte: async (pdf_path,fi,ff) => {
+        return "Borrador de correo creado con el reporte adjunto";
+      },
+      listar_reportes: async () => {
+        return {
+          error:null,
+          reportes:[
+            {nombre:"Executive_Report_2025-04-01.pdf",tamano_mb:2.1,fecha_modificacion:"01/05/2025 09:15"},
+            {nombre:"Executive_Report_2025-04-02.pdf",tamano_mb:2.3,fecha_modificacion:"02/05/2025 09:20"}
+          ]
+        };
+      },
+      abrir_reporte_historial: async (nombre) => {
+        return {error:null,mensaje:"Abriendo "+nombre+" en la aplicación"};
+      },
+      analisis_correlaciones: async (fi,ff,modelo,defecto) => {
+        return {
+          error:null,
+          insights_automaticos:[
+            {tipo:"turno_critico",mensaje:"Mayor concentración de NOK los lunes en turno A.",recomendacion:"Revisar estándares y staffing del turno A en lunes."},
+            {tipo:"oportunidad_ahorro",mensaje:"3 defectos explican el 72% del coste.",recomendacion:"Focalizar acciones en PLIEGUES, VIRUELA y BULTOS."}
+          ],
+          correlacion_dias_semana:{
+            distribucion:{Monday:90,Tuesday:60,Wednesday:55,Thursday:40,Friday:35},
+            promedio:56
+          },
+          correlacion_uets_defectos:{
+            matriz:{101:{PLIEGUES:12,VIRUELA:4},102:{BULTOS:9},103:{PLIEGUES:2}},
+            correlaciones_criticas:[
+              {uet:101,defecto:"PLIEGUES",cantidad:12,porcentaje:70,total_uet:17}
+            ]
+          },
+          correlacion_modelos_defectos:{
+            matriz:{
+              "BR46X":{PLIEGUES:20,BULTOS:5},
+              "VS20":{PLIEGUES:10,VIRUELA:8}
+            }
+          },
+          correlacion_costes:{
+            distribucion:{PLIEGUES:4200,VIRUELA:3100,BULTOS:1800}
+          }
+        };
+      }
+    }
+  };
+}
+
+/* ===== Config global ===== */
+const MODELOS = [
+  "600S TC","600S TV","A05 GA 2P","A05 GA 4P","A05 GB 2P","A05 GB 4P","A72 TN","A72 TO",
+  "AIRCROSS","B95 TN","B95 TO","BFB TN","BFB TO","BR463 ND","BR463 SHD","BR465 ND","BR465 SHD",
+  "BR46X","CABRIO","CROSSLAND FR","CROSSLAND SR","DHN TN","HHN TN","RHN TN","VS20 SHD",
+  "VW270 ND GA","VW270 PSD","VW276 ND","VW276 PSD","X72 TN","X72 CIELO"
+];
+const DEFECTOS = [
+  "PLIEGUES","HOYOS","DESPEGUES","GASES","DEFORMADOS","ESPUMA ROTA","ARRUGAS","MANCHAS",
+  "VIRUELA","BULTOS","CASCARILLA","MANIPULACION","ESPUMA NOK","DESPEGUES REVESTIMIENTO",
+  "DESPEGUES SOPORTE","REBORDEO NOK","PROVEEDOR TEJIDO","RIGIDEZ NOK"
+];
+
+let selectedModelos = [];
+let selectedDefectos = [];
+const charts = {};
+
+function showSpinner(show){
+  document.getElementById("progressOverlay").style.display = show ? "flex" : "none";
+}
+
+let toastTimeout;
+function showNotification(msg,type="info"){
+  let el = document.getElementById("toast");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "toast";
+    el.className = "toast";
+    document.body.appendChild(el);
+  }
+  el.className = "toast "+type;
+  el.textContent = msg;
+  el.offsetHeight;
+  el.classList.add("show");
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(()=>el.classList.remove("show"),2600);
+}
+
+function makeChart(id,config){
+  const canvas = document.getElementById(id);
+  if(!canvas) return null;
+  const ctx = canvas.getContext("2d");
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx,config);
+  return charts[id];
+}
+
+const baseChartOptions = {
+
+  responsive:true,
+  maintainAspectRatio:false,
+  plugins:{
+    legend:{
+      labels:{
+        font:{family:"Inter",size:8},
+        usePointStyle:true,
+        padding:6
+      }
+    },
+    tooltip:{
+      backgroundColor:"#111827",
+      titleFont:{family:"Inter",size:9,weight:"600"},
+      bodyFont:{family:"Inter",size:8},
+      padding:6,
+      cornerRadius:5
+    }
+  },
+  scales:{
+    x:{
+      ticks:{font:{family:"Inter",size:8},color:"#6b7280"},
+      grid:{color:"#f3f4f6"}
+    },
+    y:{
+      beginAtZero:true,
+      ticks:{font:{family:"Inter",size:8},color:"#6b7280"},
+      grid:{color:"#f3f4f6"}
+    }
+  }
+};
+const donutOptionsBase = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: "65%",          // agujero un poco más grande = donut más fino
+  layout: { padding: 8 }, // margen interno
+  plugins: {
+    legend: {
+      position: "right", // abajo para no comer ancho
+      labels: {
+        font: { family: "Inter", size: 7 },
+        usePointStyle: true,
+        padding: 4
+      }
+    },
+    tooltip: baseChartOptions.plugins.tooltip
+  },
+  scales: {}              // sin ejes
+};
+
+function colorPalette(n){
+  const colors = ["#2563eb","#16a34a","#f97316","#dc2626","#0f766e","#7c3aed","#6b7280","#22c55e"];
+  return Array.from({length:n},(_,i)=>colors[i%colors.length]);
+}
+
+/* ===== Multi-select con click normal + búsqueda ===== */
+
+function updateSelectedItems(type){
+  const select = document.getElementById(type==="modelo"?"selectModelo":"selectDefecto");
+  const container = document.getElementById(type==="modelo"?"selectedModelos":"selectedDefectos");
+  const values = Array.from(select.options).filter(o=>o.selected && o.style.display!=="none").map(o=>o.value);
+
+  if(type==="modelo") selectedModelos = values;
+  else selectedDefectos = values;
+
+  container.innerHTML = "";
+  if(values.length===0){
+    const span = document.createElement("span");
+    span.className = "no-selection";
+    span.textContent = type==="modelo"?"Ningún modelo seleccionado":"Ningún defecto seleccionado";
+    container.appendChild(span);
+  } else {
+    values.forEach(v=>{
+      const div = document.createElement("div");
+      div.className = "selected-item";
+      const label = v.length>18 ? v.slice(0,18)+"…" : v;
+      div.innerHTML = `<span title="${v}">${label}</span>
+                       <span class="remove-item" onclick="removeSelectedItem('${type}','${v.replace(/'/g,"\\'")}')">×</span>`;
+      container.appendChild(div);
+    });
+  }
+  updateFiltersIndicator();
+}
+
+function enableMultiSelectClick(selectId,type){
+  const select = document.getElementById(selectId);
+  select.addEventListener("mousedown",function(e){
+    if(e.target.tagName !== "OPTION") return;
+    e.preventDefault();
+    const opt = e.target;
+    opt.selected = !opt.selected;
+    updateSelectedItems(type);
+  });
+}
+
+function filterOptions(selectId, searchId){
+  const term = document.getElementById(searchId).value.toLowerCase();
+  const select = document.getElementById(selectId);
+  Array.from(select.options).forEach(o=>{
+    o.style.display = o.value.toLowerCase().includes(term) ? "" : "none";
+  });
+}
+
+function removeSelectedItem(type,value){
+  const select = document.getElementById(type==="modelo"?"selectModelo":"selectDefecto");
+  Array.from(select.options).forEach(o=>{
+    if(o.value===value) o.selected=false;
+  });
+  updateSelectedItems(type);
+}
+
+function selectAllItems(type){
+  const select = document.getElementById(type==="modelo"?"selectModelo":"selectDefecto");
+  Array.from(select.options).forEach(o=>{ if(o.style.display!=="none") o.selected=true; });
+  updateSelectedItems(type);
+}
+
+function clearAllItems(type){
+  const select = document.getElementById(type==="modelo"?"selectModelo":"selectDefecto");
+  Array.from(select.options).forEach(o=>o.selected=false);
+  updateSelectedItems(type);
+}
+
+function updateFiltersIndicator(){
+  const indicator = document.getElementById("filtersIndicator");
+  const content = document.getElementById("activeFiltersContent");
+  const banner = document.getElementById("activeFiltersBanner");
+  const bannerContent = document.getElementById("filterBannerContent");
+  const hasModelos = selectedModelos.length>0;
+  const hasDefectos = selectedDefectos.length>0;
+  const hasFilters = hasModelos || hasDefectos;
+
+  if(hasFilters){
+    indicator.classList.add("active");
+    let html = "";
+    if(hasModelos){
+      html += `<span class="filter-tag">📦 ${selectedModelos.length>3?selectedModelos.length+" modelos":selectedModelos.join(", ")}</span>`;
+    }
+    if(hasDefectos){
+      html += `<span class="filter-tag">⚠️ ${selectedDefectos.length>3?selectedDefectos.length+" defectos":selectedDefectos.join(", ")}</span>`;
+    }
+    content.innerHTML = html;
+    banner.classList.add("show");
+    bannerContent.innerHTML = html.replace(/filter-tag/g,"active-filter-tag");
+    document.getElementById("resultsTitle").textContent = "Resultados del análisis filtrado";
+  } else {
+    indicator.classList.remove("active");
+    banner.classList.remove("show");
+    bannerContent.innerHTML = "";
+    document.getElementById("resultsTitle").textContent = "Resultados del análisis";
+  }
+}
+
+function updateFiltersFromBackend(data){
+  const f = data.filtros_aplicados || {};
+  const indicator = document.getElementById("filtersIndicator");
+  const banner = document.getElementById("activeFiltersBanner");
+  const bannerContent = document.getElementById("filterBannerContent");
+  const content = document.getElementById("activeFiltersContent");
+
+  if(f.tiene_filtros){
+    const desc = f.descripcion_filtro || "";
+    indicator.classList.add("active");
+    content.innerHTML = `<span class="filter-tag">${desc}</span>`;
+    banner.classList.add("show");
+    bannerContent.innerHTML = `<span class="active-filter-tag">${desc}</span>`;
+    document.getElementById("resultsTitle").textContent = "Resultados del análisis filtrado";
+  } else {
+    indicator.classList.remove("active");
+    banner.classList.remove("show");
+    bannerContent.innerHTML = "";
+    document.getElementById("resultsTitle").textContent = "Resultados del análisis";
+  }
+}
+
+/* ===== Modal día ===== */
+function closeDayModal(){
+  document.getElementById("dayModal").style.display = "none";
+  ["dayChartDefTop","dayChartModelsTop","dayChartRewDefTop","dayChartShift"].forEach(id=>{
+    if(charts[id]){charts[id].destroy();delete charts[id];}
+  });
+}
+
+async function showDayPopup(fecha){
+  showSpinner(true);
+  const modelo = selectedModelos.join("|");
+  const defecto = selectedDefectos.join("|");
+  const d = await window.pywebview.api.leer_estadisticas(fecha,fecha,modelo,defecto);
+  showSpinner(false);
+  if(d.error){ showNotification(d.error,"error"); return; }
+
+  const nice = new Date(fecha+"T00:00:00").toLocaleDateString("es-ES",
+    {weekday:"long",day:"2-digit",month:"short",year:"numeric"});
+  document.getElementById("dayModalTitle").textContent =
+    nice.charAt(0).toUpperCase()+nice.slice(1);
+
+  const ok = d.total_ok||0;
+  const nok = d.total_nok||0;
+  const rew = d.total_rework||0;
+  const prov = d.total_nok_prov||0;
+  const prod = ok+nok;
+  const pct = ((nok/(prod||1))*100).toFixed(2);
+
+  document.getElementById("dayModalStats").innerHTML = `
+    <div class="stat-card"><div class="stat-header"><span>Producción</span></div><div class="stat-value">${prod.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-header"><span>Piezas NOK</span></div><div class="stat-value">${nok.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-header"><span>Retrabajos</span></div><div class="stat-value">${rew.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-header"><span>% NOK</span></div><div class="stat-value">${pct}%</div></div>
+    <div class="stat-card"><div class="stat-header"><span>NOK Proveedor</span></div><div class="stat-value">${prov.toLocaleString()}</div></div>
+  `;
+
+  const modalOpt = {
+    ...baseChartOptions,
+    plugins:{...baseChartOptions.plugins,legend:{display:false}},
+  };
+
+  const dd = d.defect_distribution||{};
+  const ddKeys = Object.keys(dd).sort((a,b)=>dd[b]-dd[a]).slice(0,5);
+  makeChart("dayChartDefTop",{
+    type:"bar",
+    data:{labels:ddKeys,datasets:[{data:ddKeys.map(k=>dd[k]),
+      backgroundColor:colorPalette(ddKeys.length),borderRadius:4,borderSkipped:false}]},
+    options:modalOpt
+  });
+
+  const md = d.models_distribution||{};
+  const mdKeys = Object.keys(md).sort((a,b)=>md[b]-md[a]).slice(0,5);
+  makeChart("dayChartModelsTop",{
+    type:"bar",
+    data:{labels:mdKeys,datasets:[{data:mdKeys.map(k=>md[k]),
+      backgroundColor:colorPalette(mdKeys.length),borderRadius:4,borderSkipped:false}]},
+    options:modalOpt
+  });
+
+  const rd = d.rework_defect_distribution||{};
+  const rdKeys = Object.keys(rd).sort((a,b)=>rd[b]-rd[a]).slice(0,5);
+  makeChart("dayChartRewDefTop",{
+    type:"bar",
+    data:{labels:rdKeys,datasets:[{data:rdKeys.map(k=>rd[k]),
+      backgroundColor:colorPalette(rdKeys.length),borderRadius:4,borderSkipped:false}]},
+    options:modalOpt
+  });
+
+  const sd = d.shift_distribution||{};
+  const sdKeys = Object.keys(sd);
+  makeChart("dayChartShift",{
+    type:"bar",
+    data:{labels:sdKeys,datasets:[{data:sdKeys.map(k=>sd[k]),
+      backgroundColor:colorPalette(sdKeys.length),borderRadius:4,borderSkipped:false}]},
+    options:modalOpt
+  });
+
+  document.getElementById("dayModal").style.display = "flex";
+}
+
+/* ===== Resumen ===== */
+function createStatsCards(data){
+  const totalOK = data.total_ok||0;
+  const totalNOK = data.total_nok||0;
+  const totalRew = data.total_rework||0;
+  const total = totalOK+totalNOK;
+  const pctNOK = ((totalNOK/(total||1))*100).toFixed(2);
+
+  const t = data.tendencias || {};
+  const prodChange = (t.cambio_produccion_total||0).toFixed(1);
+  const okChange = (t.cambio_ok_total||0).toFixed(1);
+  const nokChange = (t.cambio_nok_total||0).toFixed(1);
+  const rewChange = (t.cambio_retrabajos_total||0).toFixed(1);
+  const pctChange = (t.cambio_porcentaje_nok||0).toFixed(2);
+
+  const arrow = v=>parseFloat(v)>=0?"↗":"↘";
+  const sign = v=>parseFloat(v)>=0?"+":"";
+
+  return `
+    <div class="stat-card">
+      <div class="stat-header"><span>Producción total</span></div>
+      <div class="stat-value">${total.toLocaleString()}</div>
+      <div class="stat-change ${prodChange>=0?"positive":"negative"}">${arrow(prodChange)} ${sign(prodChange)}${prodChange}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header"><span>Piezas OK</span></div>
+      <div class="stat-value">${totalOK.toLocaleString()}</div>
+      <div class="stat-change ${okChange>=0?"positive":"negative"}">${arrow(okChange)} ${sign(okChange)}${okChange}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header"><span>Piezas NOK</span></div>
+      <div class="stat-value">${totalNOK.toLocaleString()}</div>
+      <div class="stat-change ${nokChange<=0?"positive":"negative"}">${arrow(nokChange)} ${sign(nokChange)}${nokChange}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header"><span>% NOK</span></div>
+      <div class="stat-value">${pctNOK}%</div>
+      <div class="stat-change ${pctChange<=0?"positive":"negative"}">${arrow(pctChange)} ${sign(pctChange)}${pctChange}pp</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header"><span>Retrabajos</span></div>
+      <div class="stat-value">${totalRew.toLocaleString()}</div>
+      <div class="stat-change ${rewChange<=0?"positive":"negative"}">${arrow(rewChange)} ${sign(rewChange)}${rewChange}%</div>
+    </div>
+  `;
+}
+
+/* ===== NOK & Retrabajos ===== */
+function mostrarResultadosNOK(d){
+  const cont = document.getElementById("contenedorResultados");
+  document.getElementById("nokSection").style.display = "block";
+  document.getElementById("retrabajosSection").style.display = "block";
+  document.getElementById("comparativaSection").style.display = "none";
+
+  document.getElementById("statsOverview").style.display = "block";
+  document.getElementById("statsCards").innerHTML = createStatsCards(d);
+
+  const evo = d.evolution || {};
+  const fechas = Object.keys(evo).sort();
+  const rows = [];
+  const labels = [];
+  const ok = [];
+  const nok = [];
+  const pct = [];
+
+  fechas.forEach(f=>{
+    const o = evo[f].OK||0;
+    const n = evo[f].NOK||0;
+    const total = o+n;
+    if(total>0){
+      const p = ((n/total)*100).toFixed(2);
+      rows.push(`
+        <tr data-fecha="${f}" class="${p>0.9?"row-alert":""}">
+          <td>${new Date(f).toLocaleDateString("es-ES")}</td>
+          <td>${o.toLocaleString()}</td>
+          <td>${n.toLocaleString()}</td>
+          <td>${p}%</td>
+        </tr>
+      `);
+      labels.push(f);
+      ok.push(o);
+      nok.push(n);
+      pct.push((n/total)*100);
+    }
+  });
+
+  if(rows.length){
+    cont.innerHTML = `
+      <div style="margin-bottom:3px;color:var(--muted);font-size:8px;">
+        ${rows.length} días con producción en el período analizado. Click en una fila para ver el detalle diario.
+      </div>
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Fecha</th><th>OK</th><th>NOK</th><th>% NOK</th>
+          </tr>
+        </thead>
+        <tbody>${rows.join("")}</tbody>
+      </table>
+    `;
+    cont.querySelectorAll("tr[data-fecha]").forEach(tr=>{
+      tr.addEventListener("click",()=>showDayPopup(tr.dataset.fecha));
+    });
+  } else {
+    cont.innerHTML = `<div style="padding:14px;text-align:center;color:var(--muted);">Sin producción en el rango seleccionado.</div>`;
+  }
+
+  makeChart("chartOkNok",{
+    type:"line",
+    data:{
+      labels,
+      datasets:[
+        {label:"OK",data:ok,borderColor:"#16a34a",backgroundColor:"rgba(22,163,74,0.08)",fill:true,tension:0.35,pointRadius:2},
+        {label:"NOK",data:nok,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,0.06)",fill:true,tension:0.35,pointRadius:2}
+      ]
+    },
+    options:baseChartOptions
+  });
+
+  makeChart("chartBarsLineOkNokPercent",{
+    data:{
+      labels,
+      datasets:[
+        {type:"bar",label:"OK",data:ok,yAxisID:"y1",backgroundColor:"#2563eb",borderRadius:3,borderSkipped:false},
+        {type:"line",label:"% NOK",data:pct,yAxisID:"y2",borderColor:"#dc2626",fill:false,tension:0.35,pointRadius:2}
+      ]
+    },
+    options:{
+      ...baseChartOptions,
+      scales:{
+        x:baseChartOptions.scales.x,
+        y1:{...baseChartOptions.scales.y,position:"left"},
+        y2:{...baseChartOptions.scales.y,position:"right",grid:{drawOnChartArea:false},
+            ticks:{font:{family:"Inter",size:8},color:"#dc2626"}}
+      }
+    }
+  });
+
+  const dd = d.defect_distribution||{};
+  const ddKeys = Object.keys(dd).sort((a,b)=>dd[b]-dd[a]);
+  makeChart("chartDefectsBar",{
+    type:"bar",
+    data:{
+      labels:ddKeys.slice(0,5),
+      datasets:[{label:"NOK",data:ddKeys.slice(0,5).map(k=>dd[k]),
+                 backgroundColor:colorPalette(5),borderRadius:4,borderSkipped:false}]
+    },
+    options:baseChartOptions
+  });
+
+  // Donut NOK sin ejes, legend compacta a la derecha
+  makeChart("chartDonutDefects", {
+  type: "doughnut",
+  data: {
+    labels: ddKeys,
+    datasets: [{
+      data: ddKeys.map(k => dd[k]),
+      backgroundColor: colorPalette(ddKeys.length),
+      borderWidth: 1,
+      radius: "70%",       // controla tamaño del círculo
+      hoverRadius: "82%"
+    }]
+  },
+  options: donutOptionsBase
+});
+
+
+  const md = d.models_distribution||{};
+  const mdKeys = Object.keys(md).sort((a,b)=>md[b]-md[a]);
+  makeChart("chartTopModels",{
+    type:"bar",
+    data:{
+      labels:mdKeys.slice(0,5),
+      datasets:[{label:"NOK",data:mdKeys.slice(0,5).map(k=>md[k]),
+                 backgroundColor:colorPalette(5),borderRadius:4,borderSkipped:false}]
+    },
+    options:baseChartOptions
+  });
+
+  const sd = d.shift_distribution||{};
+  const sdKeys = Object.keys(sd);
+  makeChart("chartShift",{
+    type:"bar",
+    data:{
+      labels:sdKeys,
+      datasets:[{label:"NOK",data:sdKeys.map(k=>sd[k]),
+                 backgroundColor:colorPalette(sdKeys.length),borderRadius:4,borderSkipped:false}]
+    },
+    options:baseChartOptions
+  });
+}
+
+function mostrarResultadosRetrabajos(d){
+  const evo = d.evolution_rework || {};
+  const fechas = Object.keys(evo).sort();
+
+  makeChart("chartRewGlobal",{
+    type:"line",
+    data:{
+      labels:fechas,
+      datasets:[{
+        label:"Retrabajos",
+        data:fechas.map(f=>evo[f]),
+        borderColor:"#f97316",
+        backgroundColor:"rgba(249,115,22,0.08)",
+        fill:true,
+        tension:0.35,
+        pointRadius:2
+      }]
+    },
+    options:baseChartOptions
+  });
+
+  const dd = d.rework_defect_distribution||{};
+  const ddKeys = Object.keys(dd).sort((a,b)=>dd[b]-dd[a]);
+  makeChart("chartRewDefBar",{
+    type:"bar",
+    data:{
+      labels:ddKeys.slice(0,5),
+      datasets:[{label:"Retrabajos",data:ddKeys.slice(0,5).map(k=>dd[k]),
+                 backgroundColor:colorPalette(5),borderRadius:4,borderSkipped:false}]
+    },
+    options:baseChartOptions
+  });
+
+  // Donut R sin ejes
+  makeChart("chartRewDonutDefects", {
+  type: "doughnut",
+  data: {
+    labels: ddKeys,
+    datasets: [{
+      data: ddKeys.map(k => dd[k]),
+      backgroundColor: colorPalette(ddKeys.length),
+      borderWidth: 1,
+      radius: "70%",
+      hoverRadius: "82%"
+    }]
+  },
+  options: donutOptionsBase
+});
+
+
+  const md = d.rework_models_distribution||{};
+  const mdKeys = Object.keys(md).sort((a,b)=>md[b]-md[a]);
+  makeChart("chartRewModels",{
+    type:"bar",
+    data:{
+      labels:mdKeys.slice(0,5),
+      datasets:[{label:"Retrabajos",data:mdKeys.slice(0,5).map(k=>md[k]),
+                 backgroundColor:colorPalette(5),borderRadius:4,borderSkipped:false}]
+    },
+    options:baseChartOptions
+  });
+
+  const sd = d.rework_shift_distribution||{};
+  const sdKeys = Object.keys(sd);
+  makeChart("chartRewShift",{
+    type:"bar",
+    data:{
+      labels:sdKeys,
+      datasets:[{label:"Retrabajos",data:sdKeys.map(k=>sd[k]),
+                 backgroundColor:colorPalette(sdKeys.length),borderRadius:4,borderSkipped:false}]
+    },
+    options:baseChartOptions
+  });
+
+  makeChart("chartRewPartial",{
+    type:"bar",
+    data:{
+      labels:fechas,
+      datasets:[{label:"Retrabajos",data:fechas.map(f=>evo[f]),
+                 backgroundColor:"#4b5563",borderRadius:3,borderSkipped:false}]
+    },
+    options:baseChartOptions
+  });
+}
+
+/* ===== Consultas ===== */
+async function consultar(){
+  const fi = document.getElementById("fechaInicio").value;
+  const ff = document.getElementById("fechaFin").value;
+  if(!fi||!ff){
+    showNotification("Selecciona fechas para el Rango 1.","warning");
+    return;
+  }
+  const modelo = selectedModelos.join("|");
+  const defecto = selectedDefectos.join("|");
+
+  showSpinner(true);
+  const data = await window.pywebview.api.leer_estadisticas(fi,ff,modelo,defecto);
+  showSpinner(false);
+
+  if(data.error){
+    showNotification(data.error,"error");
+    return;
+  }
+  updateFiltersFromBackend(data);
+  mostrarResultadosNOK(data);
+  mostrarResultadosRetrabajos(data);
+  document.getElementById("correlacionesSection").style.display="none";
+  showNotification("Análisis actualizado.","success");
+}
+
+async function consultarComparativa(){
+  const fi1 = document.getElementById("fechaInicio").value;
+  const ff1 = document.getElementById("fechaFin").value;
+  const fi2 = document.getElementById("fechaInicio2").value;
+  const ff2 = document.getElementById("fechaFin2").value;
+  if(!fi1||!ff1||!fi2||!ff2){
+    showNotification("Completa los dos rangos de fechas para la comparativa.","warning");
+    return;
+  }
+  const modelo = selectedModelos.join("|");
+  const defecto = selectedDefectos.join("|");
+
+  showSpinner(true);
+  const [d1,d2] = await Promise.all([
+    window.pywebview.api.leer_estadisticas(fi1,ff1,modelo,defecto),
+    window.pywebview.api.leer_estadisticas(fi2,ff2,modelo,defecto)
+  ]);
+  showSpinner(false);
+
+  if(d1.error||d2.error){
+    showNotification(d1.error||d2.error,"error");
+    return;
+  }
+
+  document.getElementById("nokSection").style.display="none";
+  document.getElementById("retrabajosSection").style.display="none";
+  document.getElementById("statsOverview").style.display="none";
+  document.getElementById("correlacionesSection").style.display="none";
+  document.getElementById("comparativaSection").style.display="block";
+
+  const cont = document.getElementById("contenedorResultados");
+  cont.innerHTML = `
+    <div style="padding:4px 0;font-size:9px;color:var(--muted);">
+      Comparando <strong>${fi1}</strong> – <strong>${ff1}</strong> frente a
+      <strong>${fi2}</strong> – <strong>${ff2}</strong>.
+    </div>
+  `;
+
+  const sum = d=>{
+    const ok=d.total_ok||0,nok=d.total_nok||0,t=ok+nok;
+    return {total:t,pct:((nok/(t||1))*100).toFixed(2)};
+  };
+  const s1=sum(d1),s2=sum(d2);
+
+  cont.innerHTML += `
+    <div class="stats-overview" style="margin-top:2px;">
+      <div class="stat-card">
+        <div class="stat-header"><span>Período 1</span></div>
+        <div class="stat-value">${s1.total.toLocaleString()}</div>
+        <div class="stat-change">${s1.pct}% NOK</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header"><span>Período 2</span></div>
+        <div class="stat-value">${s2.total.toLocaleString()}</div>
+        <div class="stat-change">${s2.pct}% NOK</div>
+      </div>
+    </div>
+  `;
+
+  const ev1=d1.evolution||{},ev2=d2.evolution||{};
+  const f1=Object.keys(ev1).sort(),f2=Object.keys(ev2).sort();
+
+  document.getElementById("chartComparativa1Title").textContent = `Rango 1 (${fi1} – ${ff1})`;
+  document.getElementById("chartComparativa2Title").textContent = `Rango 2 (${fi2} – ${ff2})`;
+
+  makeChart("chartComparativa1",{
+    type:"line",
+    data:{
+      labels:f1,
+      datasets:[
+        {label:"OK",data:f1.map(k=>ev1[k].OK),borderColor:"#2563eb",tension:0.35,pointRadius:1.5},
+        {label:"NOK",data:f1.map(k=>ev1[k].NOK),borderColor:"#dc2626",tension:0.35,pointRadius:1.5}
+      ]
+    },
+    options:baseChartOptions
+  });
+
+  makeChart("chartComparativa2",{
+    type:"line",
+    data:{
+      labels:f2,
+      datasets:[
+        {label:"OK",data:f2.map(k=>ev2[k].OK),borderColor:"#16a34a",tension:0.35,pointRadius:1.5},
+        {label:"NOK",data:f2.map(k=>ev2[k].NOK),borderColor:"#f97316",tension:0.35,pointRadius:1.5}
+      ]
+    },
+    options:baseChartOptions
+  });
+
+  const dd1=d1.defect_distribution||{},dd2=d2.defect_distribution||{};
+  const k1=Object.keys(dd1).sort((a,b)=>dd1[b]-dd1[a]);
+  const k2=Object.keys(dd2).sort((a,b)=>dd2[b]-dd2[a]);
+
+  makeChart("chartComparativaDonut1", {
+    type: "doughnut",
+    data: {
+      labels: k1,
+      datasets: [{
+        data: k1.map(k => dd1[k]),
+        backgroundColor: colorPalette(k1.length),
+        borderWidth: 1,
+        radius: "70%",
+        hoverRadius: "82%"
+      }]
+    },
+    options: donutOptionsBase
+  });
+
+  makeChart("chartComparativaDonut2", {
+    type: "doughnut",
+    data: {
+      labels: k2,
+      datasets: [{
+        data: k2.map(k => dd2[k]),
+        backgroundColor: colorPalette(k2.length),
+        borderWidth: 1,
+        radius: "70%",
+        hoverRadius: "82%"
+      }]
+    },
+    options: donutOptionsBase
+  });
+
+
+  showNotification("Comparativa generada.","success");
+}
+
+function consultarDiaAnterior(){
+  const d = new Date();
+  d.setDate(d.getDate()-1);
+  const iso = d.toISOString().split("T")[0];
+  document.getElementById("fechaInicio").value = iso;
+  document.getElementById("fechaFin").value = iso;
+  consultar();
+}
+
+/* ===== Reporte PDF & Email ===== */
+async function sacarReporte(){
+  const fi = document.getElementById("fechaInicio").value;
+  const ff = document.getElementById("fechaFin").value;
+  if(!fi||!ff){
+    showNotification("Configura el Rango 1 para generar el reporte.","warning");
+    return;
+  }
+  showSpinner(true);
+  const res = await window.pywebview.api.generar_reporte_pdf(fi,ff);
+  showSpinner(false);
+  if(res.error){
+    showNotification(res.error,"error");
+    return;
+  }
+  showNotification("Reporte PDF generado.","success");
+}
+
+document.getElementById("btnOutlook").addEventListener("click", async ()=>{
+  const fi = document.getElementById("fechaInicio").value;
+  const ff = document.getElementById("fechaFin").value;
+  if(!fi||!ff){
+    showNotification("Selecciona un rango de fechas antes de preparar el email.","warning");
+    return;
+  }
+  showSpinner(true);
+  const pdf = await window.pywebview.api.generar_reporte_pdf(fi,ff);
+  if(pdf.error){
+    showSpinner(false);
+    showNotification(pdf.error,"error");
+    return;
+  }
+  const msg = await window.pywebview.api.abrir_outlook_reporte(pdf.pdf_path,fi,ff);
+  showSpinner(false);
+  if(msg && !msg.error){
+    showNotification("Borrador de correo preparado en Outlook.","success");
+  } else {
+    showNotification("No se pudo crear el correo.","error");
+  }
+});
+
+/* ===== Historial reportes ===== */
+let todosLosReportes = [];
+
+async function mostrarHistorial(){
+  document.getElementById("historialModal").style.display = "flex";
+  await cargarReportesHistorial();
+}
+
+function cerrarHistorial(){
+  document.getElementById("historialModal").style.display = "none";
+}
+
+async function cargarReportesHistorial(){
+  const ul = document.getElementById("listaReportesHistorial");
+  ul.innerHTML = `<li style="padding:8px;font-size:9px;color:var(--muted);">Cargando...</li>`;
+  try{
+    const d = await window.pywebview.api.listar_reportes();
+    if(d.error){
+      ul.innerHTML = `<li style="padding:8px;color:#dc2626;font-size:9px;">${d.error}</li>`;
+      return;
+    }
+    todosLosReportes = d.reportes||[];
+    renderizarListaReportes(todosLosReportes);
+  }catch(e){
+    ul.innerHTML = `<li style="padding:8px;color:#dc2626;font-size:9px;">Error al obtener el historial.</li>`;
+  }
+}
+
+function renderizarListaReportes(list){
+  const ul = document.getElementById("listaReportesHistorial");
+  ul.innerHTML = "";
+  if(!list.length){
+    ul.innerHTML = `<li style="padding:8px;font-size:9px;color:var(--muted);">Sin reportes disponibles.</li>`;
+    return;
+  }
+  list.forEach(r=>{
+    const nombre = typeof r==="string"?r:r.nombre;
+    const fecha = r.fecha_modificacion || "";
+    const size = r.tamano_mb ? (r.tamano_mb.toFixed ? r.tamano_mb.toFixed(2):r.tamano_mb) : null;
+
+    const li = document.createElement("li");
+    li.style.cssText = "padding:7px 9px;display:flex;justify-content:space-between;align-items:center;font-size:9px;border-bottom:1px solid var(--border);cursor:pointer;";
+    li.innerHTML = `
+      <div>
+        <div style="font-weight:500;color:#111827;">${nombre}</div>
+        <div style="color:var(--muted);font-size:8px;">
+          ${fecha?`📅 ${fecha}`:""} ${size?` • ${size} MB`:""}
+        </div>
+      </div>
+      <span style="background:#eef2ff;padding:3px 6px;border-radius:999px;font-size:7px;color:#4f46e5;">Abrir</span>
+    `;
+    li.onclick = ()=>abrirReporteHistorial(nombre);
+    ul.appendChild(li);
+  });
+}
+
+document.getElementById("buscarReporteHistorial").addEventListener("input",()=>{
+  const q = document.getElementById("buscarReporteHistorial").value.toLowerCase();
+  const filtrados = todosLosReportes.filter(r=>{
+    const nombre = (typeof r==="string"?r:r.nombre||"").toLowerCase();
+    return nombre.includes(q);
+  });
+  renderizarListaReportes(filtrados);
+});
+
+async function abrirReporteHistorial(nombre){
+  showSpinner(true);
+  const res = await window.pywebview.api.abrir_reporte_historial(nombre);
+  showSpinner(false);
+  if(res.error){
+    showNotification(res.error,"error");
+  } else {
+    showNotification(res.mensaje || "Reporte abierto.","success");
+  }
+}
+
+/* ===== Correlaciones ===== */
+async function analizarCorrelaciones(){
+  const fi = document.getElementById("fechaInicio").value;
+  const ff = document.getElementById("fechaFin").value;
+  if(!fi||!ff){
+    showNotification("Selecciona fechas para analizar correlaciones.","warning");
+    return;
+  }
+  const modelo = selectedModelos.join("|");
+  const defecto = selectedDefectos.join("|");
+  showSpinner(true);
+  const data = await window.pywebview.api.analisis_correlaciones(fi,ff,modelo,defecto);
+  showSpinner(false);
+  if(data.error){
+    showNotification(data.error,"error");
+    return;
+  }
+  renderCorrelaciones(data);
+  document.getElementById("correlacionesSection").style.display = "block";
+  showNotification("Correlaciones generadas.","success");
+}
+
+function renderCorrelaciones(data){
+  const cont = document.getElementById("insightsContainer");
+  const insights = data.insights_automaticos||[];
+  if(!insights.length){
+    cont.innerHTML = `<div class="insight-card">
+      <div class="insight-title">Sin patrones relevantes</div>
+      <div class="insight-message">No se detectaron correlaciones significativas en el rango analizado.</div>
+    </div>`;
+  } else {
+    cont.innerHTML = insights.map(i=>{
+      let cls = "insight-card";
+      if(i.tipo==="turno_critico") cls+=" critico";
+      else if(i.tipo==="oportunidad_ahorro") cls+=" oportunidad";
+      return `<div class="${cls}">
+        <div class="insight-title">${i.mensaje}</div>
+        <div class="insight-recommendation">✔ ${i.recomendacion}</div>
+      </div>`;
+    }).join("");
+  }
+
+  const dsem = data.correlacion_dias_semana||{};
+  const dist = dsem.distribucion||{};
+  const dias = Object.keys(dist);
+  const vals = Object.values(dist);
+  const labels = dias.map(d=>{
+    const map = {Monday:"Lunes",Tuesday:"Martes",Wednesday:"Miércoles",Thursday:"Jueves",Friday:"Viernes",Saturday:"Sábado",Sunday:"Domingo"};
+    return map[d]||d;
+  });
+  makeChart("chartCorrelacionDias",{
+    type:"bar",
+    data:{labels,datasets:[{label:"NOK",data:vals,backgroundColor:colorPalette(vals.length),borderRadius:4,borderSkipped:false}]},
+    options:baseChartOptions
+  });
+
+  const u = data.correlacion_uets_defectos||{};
+  const crit = (u.correlaciones_criticas||[]).slice(0,6);
+  if(crit.length){
+    makeChart("chartCorrelacionTurnos",{
+      type:"bar",
+      data:{
+        labels:crit.map(c=>"UET "+c.uet),
+        datasets:[{label:"Defectos",data:crit.map(c=>c.cantidad),
+                   backgroundColor:colorPalette(crit.length),borderRadius:4,borderSkipped:false}]
+      },
+      options:baseChartOptions
+    });
+  }
+
+  const mm = data.correlacion_modelos_defectos||{};
+  const mat = mm.matriz||{};
+  const modelos = Object.keys(mat).map(m=>({
+      modelo:m,
+      total:Object.values(mat[m]).reduce((a,b)=>a+b,0)
+  }))
+  .sort((a,b)=>b.total-a.total).slice(0,5);
+  makeChart("chartCorrelacionModelos",{
+    type:"bar",
+    data:{
+      labels:modelos.map(m=>m.modelo),
+      datasets:[{label:"NOK",data:modelos.map(m=>m.total),
+                 backgroundColor:colorPalette(modelos.length),borderRadius:4,borderSkipped:false}]
+    },
+    options:baseChartOptions
+  });
+
+  const cc = data.correlacion_costes||{};
+  const cd = cc.distribucion||{};
+  const dk = Object.keys(cd).sort((a,b)=>cd[b]-cd[a]).slice(0,6);
+  makeChart("chartCorrelacionCostes",{
+    type:"bar",
+    data:{
+      labels:dk,
+      datasets:[{label:"Coste €",data:dk.map(k=>cd[k]),
+                 backgroundColor:"#dc2626",borderRadius:4,borderSkipped:false}]
+    },
+    options:{
+      ...baseChartOptions,
+      scales:{
+        x:baseChartOptions.scales.x,
+        y:{
+          ...baseChartOptions.scales.y,
+          ticks:{
+            callback:v=>"€"+v.toLocaleString(),
+            font:{family:"Inter",size:8},
+            color:"#6b7280"
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ===== Otros ===== */
+function limpiarFiltros(){
+  clearAllItems("modelo");
+  clearAllItems("defecto");
+  showNotification("Filtros limpiados. Analizarás datos globales.","info");
+}
+
+/* ===== Init ===== */
+document.addEventListener("DOMContentLoaded",()=>{
+  const mSel=document.getElementById("selectModelo");
+  const dSel=document.getElementById("selectDefecto");
+  MODELOS.forEach(m=>mSel.insertAdjacentHTML("beforeend",`<option value="${m}">${m}</option>`));
+  DEFECTOS.forEach(d=>dSel.insertAdjacentHTML("beforeend",`<option value="${d}">${d}</option>`));
+
+  // fechas por defecto: ayer-hoy
+  const today = new Date();
+  const y = new Date(); y.setDate(today.getDate()-1);
+  const fmt = d=>d.toISOString().split("T")[0];
+  document.getElementById("fechaFin").value = fmt(today);
+  document.getElementById("fechaInicio").value = fmt(y);
+
+  // multi-select con click normal
+  enableMultiSelectClick("selectModelo","modelo");
+  enableMultiSelectClick("selectDefecto","defecto");
+
+  // búsqueda en selects
+  document.getElementById("searchModelo").addEventListener("input",()=>{
+    filterOptions("selectModelo","searchModelo");
+  });
+  document.getElementById("searchDefecto").addEventListener("input",()=>{
+    filterOptions("selectDefecto","searchDefecto");
+  });
+
+  // cierre modales al hacer click fuera
+  document.getElementById("dayModal").addEventListener("click",e=>{
+    if(e.target.id==="dayModal") closeDayModal();
+  });
+  document.getElementById("historialModal").addEventListener("click",e=>{
+    if(e.target.id==="historialModal") cerrarHistorial();
+  });
+
+  // atajos
+  document.addEventListener("keydown",e=>{
+    if(e.ctrlKey && e.key==="Enter"){
+      e.preventDefault();
+      consultar();
+    }
+    if(e.key==="Escape"){
+      closeDayModal();
+      cerrarHistorial();
+    }
+  });
+
+  updateSelectedItems("modelo");
+  updateSelectedItems("defecto");
+
+  console.log("Antolin Production Quality Dashboard listo (full width, búsqueda en filtros, donuts ajustados).");
+});
+
+/* ===== Modo Presentación ===== */
+async function modoPresentacion(){
+  const fi = document.getElementById("fechaInicio").value;
+  const ff = document.getElementById("fechaFin").value;
+  if(!fi||!ff){
+    showNotification("Selecciona un rango de fechas para el modo presentación.","warning");
+    return;
+  }
+  
+  showSpinner(true);
+  try {
+    const resultado = await window.pywebview.api.generar_presentacion_html(fi, ff);
+    showSpinner(false);
+    
+    if(resultado.error){
+      showNotification(resultado.error,"error");
+      return;
+    }
+    
+    // Abrir presentación en nueva ventana
+    const ventana = window.open('', '_blank', 'width=1920,height=1080');
+    if(ventana){
+      ventana.document.write(resultado.html_content);
+      ventana.document.close();
+      showNotification(`Presentación iniciada con ${resultado.total_slides} diapositivas`, "success");
+    } else {
+      showNotification("No se pudo abrir la ventana de presentación. Permite ventanas emergentes.","error");
+    }
+  } catch(e) {
+    showSpinner(false);
+    showNotification("Error generando presentación: " + e.message,"error");
+  }
+}
+</script>
+</body>
+</html>
