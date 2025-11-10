@@ -2085,29 +2085,110 @@ async function modoPresentacion(){
     showNotification("Selecciona un rango de fechas para el modo presentación.","warning");
     return;
   }
-  
+
   showSpinner(true);
   try {
     const resultado = await window.pywebview.api.generar_presentacion_html(fi, ff);
     showSpinner(false);
-    
+
     if(resultado.error){
       showNotification(resultado.error,"error");
       return;
     }
-    
-    // Abrir presentación en nueva ventana
-    const ventana = window.open('', '_blank', 'width=1920,height=1080');
-    if(ventana){
-      ventana.document.write(resultado.html_content);
-      ventana.document.close();
-      showNotification(`Presentación iniciada con ${resultado.total_slides} diapositivas`, "success");
-    } else {
-      showNotification("No se pudo abrir la ventana de presentación. Permite ventanas emergentes.","error");
-    }
+
+    // Crear overlay de pantalla completa
+    const overlay = document.createElement('div');
+    overlay.id = 'presentacionOverlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #0F172A;
+      z-index: 9999;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    `;
+
+    // Botón de cierre
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '✕';
+    closeBtn.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      font-size: 28px;
+      font-weight: bold;
+      color: #0F172A;
+      cursor: pointer;
+      z-index: 10000;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    closeBtn.onmouseover = () => {
+      closeBtn.style.background = '#EF4444';
+      closeBtn.style.color = 'white';
+      closeBtn.style.transform = 'scale(1.1)';
+    };
+    closeBtn.onmouseout = () => {
+      closeBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+      closeBtn.style.color = '#0F172A';
+      closeBtn.style.transform = 'scale(1)';
+    };
+    closeBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      showNotification("Presentación cerrada", "info");
+    };
+
+    // Contenedor del iframe con la presentación
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = `
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      background: #0F172A;
+    `;
+    iframe.srcdoc = resultado.html_content;
+
+    // Agregar elementos al overlay
+    overlay.appendChild(closeBtn);
+    overlay.appendChild(iframe);
+
+    // Agregar overlay al body
+    document.body.appendChild(overlay);
+
+    // Cerrar con tecla Escape
+    const handleEscape = (e) => {
+      if(e.key === 'Escape' && document.getElementById('presentacionOverlay')){
+        document.body.removeChild(overlay);
+        document.removeEventListener('keydown', handleEscape);
+        showNotification("Presentación cerrada", "info");
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+
+    showNotification(`Presentación iniciada con ${resultado.total_slides} diapositivas`, "success");
+    console.log('🎬 Presentación en pantalla completa');
+    console.log('⏱️  Duración: 5 segundos por diapositiva');
+    console.log('🔄 Modo: Bucle infinito');
+    console.log('⌨️  Presiona ESC o haz clic en ✕ para salir');
+
   } catch(e) {
     showSpinner(false);
     showNotification("Error generando presentación: " + e.message,"error");
+    console.error('Error:', e);
   }
 }
 </script>
