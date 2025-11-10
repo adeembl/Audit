@@ -2428,8 +2428,94 @@ class API:
             rejection_rate = (global_nok / (global_ok + global_nok) * 100) if (global_ok + global_nok) > 0 else 0
             fecha_display = fecha_inicio if fecha_inicio == fecha_fin else f"{fecha_inicio} — {fecha_fin}"
 
+            # Obtener tendencias
+            tendencias = data_all.get("tendencias", {})
+            cambio_prod = tendencias.get("cambio_produccion_total", 0)
+            cambio_ok = tendencias.get("cambio_ok_total", 0)
+            cambio_nok = tendencias.get("cambio_nok_total", 0)
+            cambio_rew = tendencias.get("cambio_retrabajos_total", 0)
+            cambio_pct_nok = tendencias.get("cambio_porcentaje_nok", 0)
+
             # Preparar lista de diapositivas
             slides_html = []
+
+            # === DIAPOSITIVA 0: TENDENCIAS ===
+            def get_trend_color(val):
+                return "#10B981" if val >= 0 else "#EF4444"
+
+            def get_trend_arrow(val):
+                return "↗" if val >= 0 else "↘"
+
+            def get_trend_sign(val):
+                return "+" if val >= 0 else ""
+
+            slide_tendencias = f'''
+            <div class="slide">
+                <div class="slide-header" style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);">
+                    <h1>ANÁLISIS DE TENDENCIAS</h1>
+                    <p class="slide-subtitle">EVOLUCIÓN RESPECTO AL PERÍODO ANTERIOR</p>
+                    <p class="slide-period">Período: {fecha_display}</p>
+                </div>
+                <div class="tendencias-grid">
+                    <div class="tendencia-card">
+                        <div class="tendencia-icon" style="background: {get_trend_color(cambio_prod)};">
+                            <span style="font-size: 48px;">{get_trend_arrow(cambio_prod)}</span>
+                        </div>
+                        <div class="tendencia-label">PRODUCCIÓN TOTAL</div>
+                        <div class="tendencia-value" style="color: {get_trend_color(cambio_prod)};">
+                            {get_trend_sign(cambio_prod)}{cambio_prod:.1f}%
+                        </div>
+                        <div class="tendencia-desc">vs período anterior</div>
+                    </div>
+                    <div class="tendencia-card">
+                        <div class="tendencia-icon" style="background: {get_trend_color(cambio_ok)};">
+                            <span style="font-size: 48px;">{get_trend_arrow(cambio_ok)}</span>
+                        </div>
+                        <div class="tendencia-label">PIEZAS OK</div>
+                        <div class="tendencia-value" style="color: {get_trend_color(cambio_ok)};">
+                            {get_trend_sign(cambio_ok)}{cambio_ok:.1f}%
+                        </div>
+                        <div class="tendencia-desc">vs período anterior</div>
+                    </div>
+                    <div class="tendencia-card">
+                        <div class="tendencia-icon" style="background: {get_trend_color(-cambio_nok)};">
+                            <span style="font-size: 48px;">{get_trend_arrow(cambio_nok)}</span>
+                        </div>
+                        <div class="tendencia-label">PIEZAS NOK</div>
+                        <div class="tendencia-value" style="color: {get_trend_color(-cambio_nok)};">
+                            {get_trend_sign(cambio_nok)}{cambio_nok:.1f}%
+                        </div>
+                        <div class="tendencia-desc">vs período anterior</div>
+                    </div>
+                    <div class="tendencia-card">
+                        <div class="tendencia-icon" style="background: {get_trend_color(-cambio_rew)};">
+                            <span style="font-size: 48px;">{get_trend_arrow(cambio_rew)}</span>
+                        </div>
+                        <div class="tendencia-label">RETRABAJOS</div>
+                        <div class="tendencia-value" style="color: {get_trend_color(-cambio_rew)};">
+                            {get_trend_sign(cambio_rew)}{cambio_rew:.1f}%
+                        </div>
+                        <div class="tendencia-desc">vs período anterior</div>
+                    </div>
+                    <div class="tendencia-card">
+                        <div class="tendencia-icon" style="background: {get_trend_color(-cambio_pct_nok)};">
+                            <span style="font-size: 48px;">{get_trend_arrow(cambio_pct_nok)}</span>
+                        </div>
+                        <div class="tendencia-label">% NOK</div>
+                        <div class="tendencia-value" style="color: {get_trend_color(-cambio_pct_nok)};">
+                            {get_trend_sign(cambio_pct_nok)}{cambio_pct_nok:.2f}pp
+                        </div>
+                        <div class="tendencia-desc">vs período anterior</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 40px; padding: 20px; background: white; border-radius: 15px; margin: 40px 80px;">
+                    <p style="font-size: 20px; color: #64748B; margin: 0;">
+                        📊 Las tendencias comparan el período actual con el período anterior de la misma duración
+                    </p>
+                </div>
+            </div>
+            '''
+            slides_html.append(slide_tendencias)
 
             # === DIAPOSITIVA 1: NOK GLOBAL ===
             status_color = "#EF4444" if rejection_rate > self.OBJETIVO else "#10B981"
@@ -2534,14 +2620,15 @@ class API:
                 )[:10]
 
                 tabla_costes_html = ""
-                for (linea, uet, turno), datos in costes_sorted:
+                for i, ((linea, uet, turno), datos) in enumerate(costes_sorted):
                     coste = datos['total_coste']
+                    bg_color = "#F3E8FF" if i % 2 == 0 else "white"
                     tabla_costes_html += f'''
-                    <tr>
-                        <td>{linea}</td>
-                        <td>{uet}</td>
-                        <td>{turno}</td>
-                        <td style="text-align: right; font-weight: 600;">€{coste:,.2f}</td>
+                    <tr style="background: {bg_color}; border-bottom: 1px solid #E2E8F0;">
+                        <td style="padding: 15px; color: #1E293B; font-weight: 500;">{linea}</td>
+                        <td style="padding: 15px; color: #1E293B; font-weight: 500;">{uet}</td>
+                        <td style="padding: 15px; color: #1E293B; font-weight: 500;">{turno}</td>
+                        <td style="padding: 15px; text-align: right; font-weight: 700; color: #7C3AED;">€{coste:,.2f}</td>
                     </tr>
                     '''
 
@@ -2567,15 +2654,15 @@ class API:
                             <div class="kpi-value">€{coste_medio:.2f}</div>
                         </div>
                     </div>
-                    <div style="padding: 30px; background: white; border-radius: 15px; margin: 20px 40px;">
-                        <h2 style="color: #1E293B; margin-bottom: 20px; font-size: 28px;">Top 10 Líneas con Mayor Impacto Económico</h2>
+                    <div style="padding: 40px 60px; background: white; border-radius: 20px; margin: 30px 80px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);">
+                        <h2 style="color: #1E293B; margin-bottom: 30px; font-size: 32px; text-align: center; border-bottom: 3px solid #7C3AED; padding-bottom: 15px;">Top 10 Líneas con Mayor Impacto Económico</h2>
                         <table style="width: 100%; border-collapse: collapse; font-size: 22px;">
                             <thead>
-                                <tr style="background: #F1F5F9; border-bottom: 2px solid #7C3AED;">
-                                    <th style="padding: 15px; text-align: left;">Línea</th>
-                                    <th style="padding: 15px; text-align: left;">UET</th>
-                                    <th style="padding: 15px; text-align: left;">Turno</th>
-                                    <th style="padding: 15px; text-align: right;">Coste Total</th>
+                                <tr style="background: #7C3AED; color: white;">
+                                    <th style="padding: 18px; text-align: left; font-weight: 700;">Línea</th>
+                                    <th style="padding: 18px; text-align: left; font-weight: 700;">UET</th>
+                                    <th style="padding: 18px; text-align: left; font-weight: 700;">Turno</th>
+                                    <th style="padding: 18px; text-align: right; font-weight: 700;">Coste Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2605,11 +2692,12 @@ class API:
                         # Distribución de defectos del modelo
                         modelo_def_dist = data_modelo.get("defect_distribution", {})
                         def_table_html = ""
-                        for defecto, cant in sorted(modelo_def_dist.items(), key=lambda x: x[1], reverse=True)[:5]:
+                        for i, (defecto, cant) in enumerate(sorted(modelo_def_dist.items(), key=lambda x: x[1], reverse=True)[:5]):
+                            bg_color = "#FEE2E2" if i % 2 == 0 else "white"
                             def_table_html += f'''
-                            <tr>
-                                <td style="padding: 10px;">{defecto}</td>
-                                <td style="padding: 10px; text-align: right; font-weight: 600;">{cant:,}</td>
+                            <tr style="background: {bg_color}; border-bottom: 1px solid #E2E8F0;">
+                                <td style="padding: 15px; color: #1E293B; font-weight: 500;">{defecto}</td>
+                                <td style="padding: 15px; text-align: right; font-weight: 700; color: #DC2626;">{cant:,}</td>
                             </tr>
                             '''
 
@@ -2634,13 +2722,13 @@ class API:
                                     <div class="kpi-value">{modelo_pct:.2f}%</div>
                                 </div>
                             </div>
-                            <div style="padding: 30px; background: white; border-radius: 15px; margin: 20px 40px;">
-                                <h2 style="color: #1E293B; margin-bottom: 20px; font-size: 32px;">Top 5 Defectos del Modelo</h2>
-                                <table style="width: 100%; border-collapse: collapse; font-size: 24px;">
+                            <div style="padding: 40px 60px; background: white; border-radius: 20px; margin: 30px 100px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);">
+                                <h2 style="color: #1E293B; margin-bottom: 30px; font-size: 36px; text-align: center; border-bottom: 3px solid #DC2626; padding-bottom: 15px;">Top 5 Defectos del Modelo</h2>
+                                <table style="width: 100%; border-collapse: collapse; font-size: 26px;">
                                     <thead>
-                                        <tr style="background: #FEE2E2; border-bottom: 2px solid #DC2626;">
-                                            <th style="padding: 15px; text-align: left;">Defecto</th>
-                                            <th style="padding: 15px; text-align: right;">Cantidad</th>
+                                        <tr style="background: #DC2626; color: white;">
+                                            <th style="padding: 18px; text-align: left; font-weight: 700;">Defecto</th>
+                                            <th style="padding: 18px; text-align: right; font-weight: 700;">Cantidad</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -2666,11 +2754,12 @@ class API:
                         modelo_rew_def = data_modelo_r.get("rework_defect_distribution", {})
 
                         def_r_table_html = ""
-                        for defecto, cant in sorted(modelo_rew_def.items(), key=lambda x: x[1], reverse=True)[:5]:
+                        for i, (defecto, cant) in enumerate(sorted(modelo_rew_def.items(), key=lambda x: x[1], reverse=True)[:5]):
+                            bg_color = "#D1FAE5" if i % 2 == 0 else "white"
                             def_r_table_html += f'''
-                            <tr>
-                                <td style="padding: 10px;">{defecto}</td>
-                                <td style="padding: 10px; text-align: right; font-weight: 600;">{cant:,}</td>
+                            <tr style="background: {bg_color}; border-bottom: 1px solid #E2E8F0;">
+                                <td style="padding: 15px; color: #1E293B; font-weight: 500;">{defecto}</td>
+                                <td style="padding: 15px; text-align: right; font-weight: 700; color: #10B981;">{cant:,}</td>
                             </tr>
                             '''
 
@@ -2688,13 +2777,13 @@ class API:
                                     <div class="kpi-status">UNIDADES RECUPERADAS</div>
                                 </div>
                             </div>
-                            <div style="padding: 30px; background: white; border-radius: 15px; margin: 20px 40px;">
-                                <h2 style="color: #1E293B; margin-bottom: 20px; font-size: 32px;">Top 5 Defectos Recuperados</h2>
-                                <table style="width: 100%; border-collapse: collapse; font-size: 24px;">
+                            <div style="padding: 40px 60px; background: white; border-radius: 20px; margin: 30px 100px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);">
+                                <h2 style="color: #1E293B; margin-bottom: 30px; font-size: 36px; text-align: center; border-bottom: 3px solid #10B981; padding-bottom: 15px;">Top 5 Defectos Recuperados</h2>
+                                <table style="width: 100%; border-collapse: collapse; font-size: 26px;">
                                     <thead>
-                                        <tr style="background: #D1FAE5; border-bottom: 2px solid #10B981;">
-                                            <th style="padding: 15px; text-align: left;">Defecto</th>
-                                            <th style="padding: 15px; text-align: right;">Cantidad</th>
+                                        <tr style="background: #10B981; color: white;">
+                                            <th style="padding: 18px; text-align: left; font-weight: 700;">Defecto</th>
+                                            <th style="padding: 18px; text-align: right; font-weight: 700;">Cantidad</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -2793,96 +2882,157 @@ class API:
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 30px;
-            padding: 30px 60px;
+            gap: 20px;
+            padding: 20px 60px;
+            flex-wrap: wrap;
         }}
 
         .kpi-hero {{
-            padding: 30px 50px;
+            padding: 25px 45px;
             border-radius: 20px;
             text-align: center;
             color: white;
             box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-            min-width: 350px;
+            min-width: 320px;
         }}
 
         .kpi-card {{
             background: white;
-            padding: 25px 40px;
+            padding: 20px 35px;
             border-radius: 15px;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             border: 2px solid #E2E8F0;
-            min-width: 280px;
+            min-width: 250px;
         }}
 
         .kpi-label {{
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
-            color: rgba(255,255,255,0.9);
+            color: rgba(255,255,255,1);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }}
 
         .kpi-card .kpi-label {{
-            color: #64748B;
+            color: #1E293B;
         }}
 
         .kpi-value-hero {{
-            font-size: 64px;
+            font-size: 56px;
             font-weight: 800;
             line-height: 1;
-            margin: 15px 0;
+            margin: 12px 0;
+            color: white;
         }}
 
         .kpi-value {{
-            font-size: 42px;
+            font-size: 38px;
             font-weight: 700;
             color: #1E293B;
-            margin-top: 8px;
+            margin-top: 6px;
         }}
 
         .kpi-status {{
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 500;
-            opacity: 0.9;
-            margin-top: 8px;
+            opacity: 1;
+            margin-top: 6px;
+            color: white;
         }}
 
         .slide-charts {{
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
-            padding: 20px 60px 40px;
-            flex: 1;
+            gap: 20px;
+            padding: 15px 80px 30px;
+            max-width: 1920px;
+            margin: 0 auto;
         }}
 
         .chart-box {{
             background: white;
-            border-radius: 15px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             border: 2px solid #E2E8F0;
             display: flex;
             flex-direction: column;
+            max-height: 380px;
         }}
 
         .chart-box h3 {{
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: #1E293B;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             text-align: center;
             border-bottom: 2px solid #E2E8F0;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }}
 
         .chart-box img {{
             width: 100%;
-            height: auto;
+            max-height: 300px;
             object-fit: contain;
-            flex: 1;
+        }}
+
+        /* Estilos para diapositiva de tendencias */
+        .tendencias-grid {{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            padding: 40px 80px;
+        }}
+
+        .tendencia-card {{
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            border: 2px solid #E2E8F0;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }}
+
+        .tendencia-card:hover {{
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }}
+
+        .tendencia-icon {{
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+        }}
+
+        .tendencia-label {{
+            font-size: 16px;
+            font-weight: 700;
+            color: #1E293B;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+        }}
+
+        .tendencia-value {{
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1;
+            margin: 15px 0;
+        }}
+
+        .tendencia-desc {{
+            font-size: 14px;
+            color: #64748B;
+            font-weight: 500;
         }}
 
         .slide-indicator {{
