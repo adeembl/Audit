@@ -2470,20 +2470,20 @@ class API:
                 </div>
                 <div class="slide-charts">
                     <div class="chart-box">
-                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Tendencia de Calidad</h3>
-                        <img src="{img_ok_nok_b64}" alt="Tendencia" style="width: 100%; height: auto; object-fit: contain;">
+                        <h3 style="color: #1E293B; font-size: 1.1vw; font-weight: 700; margin-bottom: 0.5vh; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5vh; flex-shrink: 0;">Tendencia de Calidad</h3>
+                        <img src="{img_ok_nok_b64}" alt="Tendencia">
                     </div>
                     <div class="chart-box">
-                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Top 5 Defectos</h3>
-                        <img src="{img_defectos_b64}" alt="Defectos" style="width: 100%; height: auto; object-fit: contain;">
+                        <h3 style="color: #1E293B; font-size: 1.1vw; font-weight: 700; margin-bottom: 0.5vh; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5vh; flex-shrink: 0;">Top 5 Defectos</h3>
+                        <img src="{img_defectos_b64}" alt="Defectos">
                     </div>
                     <div class="chart-box">
-                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Impacto por Modelo</h3>
-                        <img src="{img_modelos_b64}" alt="Modelos" style="width: 100%; height: auto; object-fit: contain;">
+                        <h3 style="color: #1E293B; font-size: 1.1vw; font-weight: 700; margin-bottom: 0.5vh; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5vh; flex-shrink: 0;">Impacto por Modelo</h3>
+                        <img src="{img_modelos_b64}" alt="Modelos">
                     </div>
                     <div class="chart-box">
-                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Distribución por Turno</h3>
-                        <img src="{img_turnos_b64}" alt="Turnos" style="width: 100%; height: auto; object-fit: contain;">
+                        <h3 style="color: #1E293B; font-size: 1.1vw; font-weight: 700; margin-bottom: 0.5vh; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5vh; flex-shrink: 0;">Distribución por Turno</h3>
+                        <img src="{img_turnos_b64}" alt="Turnos">
                     </div>
                 </div>
             </div>
@@ -2507,20 +2507,20 @@ class API:
                 </div>
                 <div class="slide-charts">
                     <div class="chart-box">
-                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Evolución Temporal</h3>
-                        <img src="{img_evol_r_b64}" alt="Evolución" style="width: 100%; height: auto; object-fit: contain;">
+                        <h3 style="color: #1E293B; font-size: 1.1vw; font-weight: 700; margin-bottom: 0.5vh; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5vh; flex-shrink: 0;">Evolución Temporal</h3>
+                        <img src="{img_evol_r_b64}" alt="Evolución">
                     </div>
                     <div class="chart-box">
-                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Defectos Recuperados</h3>
-                        <img src="{img_def_r_b64}" alt="Defectos R" style="width: 100%; height: auto; object-fit: contain;">
+                        <h3 style="color: #1E293B; font-size: 1.1vw; font-weight: 700; margin-bottom: 0.5vh; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5vh; flex-shrink: 0;">Defectos Recuperados</h3>
+                        <img src="{img_def_r_b64}" alt="Defectos R">
                     </div>
                     <div class="chart-box">
-                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Modelos en Retrabajo</h3>
-                        <img src="{img_mod_r_b64}" alt="Modelos R" style="width: 100%; height: auto; object-fit: contain;">
+                        <h3 style="color: #1E293B; font-size: 1.1vw; font-weight: 700; margin-bottom: 0.5vh; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5vh; flex-shrink: 0;">Modelos en Retrabajo</h3>
+                        <img src="{img_mod_r_b64}" alt="Modelos R">
                     </div>
                     <div class="chart-box">
-                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Distribución por Turno</h3>
-                        <img src="{img_shift_r_b64}" alt="Turnos R" style="width: 100%; height: auto; object-fit: contain;">
+                        <h3 style="color: #1E293B; font-size: 1.1vw; font-weight: 700; margin-bottom: 0.5vh; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5vh; flex-shrink: 0;">Distribución por Turno</h3>
+                        <img src="{img_shift_r_b64}" alt="Turnos R">
                     </div>
                 </div>
             </div>
@@ -2722,7 +2722,7 @@ class API:
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1920, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Presentación Quality Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -2736,20 +2736,22 @@ class API:
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #0F172A;
             overflow: hidden;
-            width: 1920px;
-            height: 1080px;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
         }}
 
         .presentation-container {{
-            width: 1920px;
-            height: 1080px;
+            width: 100vw;
+            height: 100vh;
             position: relative;
             overflow: hidden;
         }}
 
         .slide {{
-            width: 1920px;
-            height: 1080px;
+            width: 100vw;
+            height: 100vh;
             position: absolute;
             top: 0;
             left: 0;
@@ -2773,30 +2775,32 @@ class API:
         }}
 
         .slide-header {{
-            padding: 30px 60px;
+            padding: 2vh 4vw;
             color: white;
             text-align: center;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            flex-shrink: 0;
         }}
 
         .slide-kpis {{
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 18px;
-            padding: 18px 60px;
+            gap: 1.5vw;
+            padding: 2vh 4vw;
             flex-wrap: wrap;
+            flex-shrink: 0;
         }}
 
         .slide-charts {{
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: repeat(2, 1fr);
-            gap: 18px;
-            padding: 10px 70px 25px;
+            gap: 1.5vh;
+            padding: 1vh 4vw 3vh;
             width: 100%;
-            height: auto;
-            max-width: 1920px;
+            flex: 1;
+            max-width: 100vw;
             margin: 0 auto;
             box-sizing: border-box;
         }}
@@ -2804,20 +2808,22 @@ class API:
         .chart-box {{
             background: white;
             border-radius: 12px;
-            padding: 12px;
+            padding: 1vh;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             border: 2px solid #E2E8F0;
             display: flex;
             flex-direction: column;
             width: 100%;
-            height: 350px;
+            height: 100%;
+            min-height: 0;
             overflow: hidden;
         }}
 
         .chart-box img {{
             width: 100%;
-            height: 100%;
+            flex: 1;
             object-fit: contain;
+            min-height: 0;
         }}
 
         .slide-indicator {{
