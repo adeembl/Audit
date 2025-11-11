@@ -2360,14 +2360,21 @@ class API:
 
     def generar_presentacion_html(self, fecha_inicio, fecha_fin):
         """
-        Genera presentación HTML con las mismas diapositivas que el PDF.
+        Genera presentación HTML IDÉNTICA a las páginas del PDF.
         Carrusel automático cada 5 segundos en bucle infinito.
         Diseñado para 1920x1080 en pantalla completa.
+
+        GENERA LAS MISMAS PÁGINAS QUE EL PDF:
+        1. Global NOK (4 gráficos 2x2)
+        2. Global Rework (4 gráficos 2x2)
+        3. Análisis Costes (si hay datos) (2 páginas)
+        4. Top 5 Modelos NOK (1 página cada uno)
+        5. Top 5 Modelos Rework (1 página cada uno)
         """
         try:
             import base64
 
-            print(f"🎬 Generando presentación HTML para {fecha_inicio} — {fecha_fin}")
+            print(f"🎬 Generando presentación HTML (IDÉNTICA AL PDF) para {fecha_inicio} — {fecha_fin}")
 
             # Leer datos globales (igual que el PDF)
             data_all = self.leer_estadisticas(fecha_inicio, fecha_fin, "(TODOS)", "(TODOS)")
@@ -2428,178 +2435,92 @@ class API:
             rejection_rate = (global_nok / (global_ok + global_nok) * 100) if (global_ok + global_nok) > 0 else 0
             fecha_display = fecha_inicio if fecha_inicio == fecha_fin else f"{fecha_inicio} — {fecha_fin}"
 
-            # Obtener tendencias
-            tendencias = data_all.get("tendencias", {})
-            cambio_prod = tendencias.get("cambio_produccion_total", 0)
-            cambio_ok = tendencias.get("cambio_ok_total", 0)
-            cambio_nok = tendencias.get("cambio_nok_total", 0)
-            cambio_rew = tendencias.get("cambio_retrabajos_total", 0)
-            cambio_pct_nok = tendencias.get("cambio_porcentaje_nok", 0)
-
             # Preparar lista de diapositivas
             slides_html = []
 
-            # === DIAPOSITIVA 0: TENDENCIAS ===
-            def get_trend_color(val):
-                return "#10B981" if val >= 0 else "#EF4444"
-
-            def get_trend_arrow(val):
-                return "↗" if val >= 0 else "↘"
-
-            def get_trend_sign(val):
-                return "+" if val >= 0 else ""
-
-            slide_tendencias = f'''
-            <div class="slide">
-                <div class="slide-header" style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);">
-                    <h1>ANÁLISIS DE TENDENCIAS</h1>
-                    <p class="slide-subtitle">EVOLUCIÓN RESPECTO AL PERÍODO ANTERIOR</p>
-                    <p class="slide-period">Período: {fecha_display}</p>
-                </div>
-                <div class="tendencias-grid">
-                    <div class="tendencia-card">
-                        <div class="tendencia-icon" style="background: {get_trend_color(cambio_prod)};">
-                            <span style="font-size: 48px;">{get_trend_arrow(cambio_prod)}</span>
-                        </div>
-                        <div class="tendencia-label">PRODUCCIÓN TOTAL</div>
-                        <div class="tendencia-value" style="color: {get_trend_color(cambio_prod)};">
-                            {get_trend_sign(cambio_prod)}{cambio_prod:.1f}%
-                        </div>
-                        <div class="tendencia-desc">vs período anterior</div>
-                    </div>
-                    <div class="tendencia-card">
-                        <div class="tendencia-icon" style="background: {get_trend_color(cambio_ok)};">
-                            <span style="font-size: 48px;">{get_trend_arrow(cambio_ok)}</span>
-                        </div>
-                        <div class="tendencia-label">PIEZAS OK</div>
-                        <div class="tendencia-value" style="color: {get_trend_color(cambio_ok)};">
-                            {get_trend_sign(cambio_ok)}{cambio_ok:.1f}%
-                        </div>
-                        <div class="tendencia-desc">vs período anterior</div>
-                    </div>
-                    <div class="tendencia-card">
-                        <div class="tendencia-icon" style="background: {get_trend_color(-cambio_nok)};">
-                            <span style="font-size: 48px;">{get_trend_arrow(cambio_nok)}</span>
-                        </div>
-                        <div class="tendencia-label">PIEZAS NOK</div>
-                        <div class="tendencia-value" style="color: {get_trend_color(-cambio_nok)};">
-                            {get_trend_sign(cambio_nok)}{cambio_nok:.1f}%
-                        </div>
-                        <div class="tendencia-desc">vs período anterior</div>
-                    </div>
-                    <div class="tendencia-card">
-                        <div class="tendencia-icon" style="background: {get_trend_color(-cambio_rew)};">
-                            <span style="font-size: 48px;">{get_trend_arrow(cambio_rew)}</span>
-                        </div>
-                        <div class="tendencia-label">RETRABAJOS</div>
-                        <div class="tendencia-value" style="color: {get_trend_color(-cambio_rew)};">
-                            {get_trend_sign(cambio_rew)}{cambio_rew:.1f}%
-                        </div>
-                        <div class="tendencia-desc">vs período anterior</div>
-                    </div>
-                    <div class="tendencia-card">
-                        <div class="tendencia-icon" style="background: {get_trend_color(-cambio_pct_nok)};">
-                            <span style="font-size: 48px;">{get_trend_arrow(cambio_pct_nok)}</span>
-                        </div>
-                        <div class="tendencia-label">% NOK</div>
-                        <div class="tendencia-value" style="color: {get_trend_color(-cambio_pct_nok)};">
-                            {get_trend_sign(cambio_pct_nok)}{cambio_pct_nok:.2f}pp
-                        </div>
-                        <div class="tendencia-desc">vs período anterior</div>
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 40px; padding: 20px; background: white; border-radius: 15px; margin: 40px 80px;">
-                    <p style="font-size: 20px; color: #64748B; margin: 0;">
-                        📊 Las tendencias comparan el período actual con el período anterior de la misma duración
-                    </p>
-                </div>
-            </div>
-            '''
-            slides_html.append(slide_tendencias)
-
-            # === DIAPOSITIVA 1: NOK GLOBAL ===
+            # === DIAPOSITIVA 1: NOK GLOBAL (IGUAL QUE PÁGINA 1 DEL PDF) ===
             status_color = "#EF4444" if rejection_rate > self.OBJETIVO else "#10B981"
             status_text = "CRÍTICO" if rejection_rate > self.OBJETIVO else "ÓPTIMO"
 
             slide1 = f'''
             <div class="slide">
                 <div class="slide-header" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);">
-                    <h1>QUALITY DASHBOARD</h1>
-                    <p class="slide-subtitle">ANÁLISIS GLOBAL DE RECHAZOS (NOK)</p>
-                    <p class="slide-period">Período: {fecha_display} | Objetivo: ≤ {self.OBJETIVO:.1f}%</p>
+                    <h1 style="color: white; font-size: 48px; margin-bottom: 8px;">QUALITY DASHBOARD</h1>
+                    <p style="color: white; font-size: 24px; margin-bottom: 5px; opacity: 0.95;">ANÁLISIS GLOBAL DE RECHAZOS (NOK)</p>
+                    <p style="color: white; font-size: 18px; opacity: 0.85;">Período: {fecha_display} | Objetivo: ≤ {self.OBJETIVO:.1f}%</p>
                 </div>
                 <div class="slide-kpis">
-                    <div class="kpi-hero" style="background: {status_color};">
-                        <div class="kpi-label">TASA DE RECHAZO</div>
-                        <div class="kpi-value-hero">{rejection_rate:.2f}%</div>
-                        <div class="kpi-status">{status_text}</div>
+                    <div class="kpi-hero" style="background: {status_color}; padding: 20px 40px; border-radius: 15px; min-width: 280px; text-align: center;">
+                        <div style="color: white; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">TASA DE RECHAZO</div>
+                        <div style="color: white; font-size: 48px; font-weight: 800; margin: 10px 0;">{rejection_rate:.2f}%</div>
+                        <div style="color: white; font-size: 13px; font-weight: 500;">{status_text}</div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-label">PRODUCCIÓN TOTAL</div>
-                        <div class="kpi-value">{total_fab:,}</div>
+                    <div class="kpi-card" style="background: white; padding: 20px 35px; border-radius: 15px; min-width: 220px; text-align: center; border: 2px solid #E2E8F0;">
+                        <div style="color: #1E293B; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">PRODUCCIÓN TOTAL</div>
+                        <div style="color: #1E293B; font-size: 36px; font-weight: 700; margin-top: 6px;">{total_fab:,}</div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-label">RECHAZOS INTERNOS</div>
-                        <div class="kpi-value">{global_nok:,}</div>
+                    <div class="kpi-card" style="background: white; padding: 20px 35px; border-radius: 15px; min-width: 220px; text-align: center; border: 2px solid #E2E8F0;">
+                        <div style="color: #1E293B; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">RECHAZOS INTERNOS</div>
+                        <div style="color: #1E293B; font-size: 36px; font-weight: 700; margin-top: 6px;">{global_nok:,}</div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-label">RECHAZOS PROVEEDOR</div>
-                        <div class="kpi-value">{global_nok_prov:,}</div>
+                    <div class="kpi-card" style="background: white; padding: 20px 35px; border-radius: 15px; min-width: 220px; text-align: center; border: 2px solid #E2E8F0;">
+                        <div style="color: #1E293B; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">RECHAZOS PROVEEDOR</div>
+                        <div style="color: #1E293B; font-size: 36px; font-weight: 700; margin-top: 6px;">{global_nok_prov:,}</div>
                     </div>
                 </div>
                 <div class="slide-charts">
                     <div class="chart-box">
-                        <h3>Tendencia de Calidad</h3>
-                        <img src="{img_ok_nok_b64}" alt="Tendencia">
+                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Tendencia de Calidad</h3>
+                        <img src="{img_ok_nok_b64}" alt="Tendencia" style="width: 100%; height: auto; object-fit: contain;">
                     </div>
                     <div class="chart-box">
-                        <h3>Top 5 Defectos</h3>
-                        <img src="{img_defectos_b64}" alt="Defectos">
+                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Top 5 Defectos</h3>
+                        <img src="{img_defectos_b64}" alt="Defectos" style="width: 100%; height: auto; object-fit: contain;">
                     </div>
                     <div class="chart-box">
-                        <h3>Impacto por Modelo</h3>
-                        <img src="{img_modelos_b64}" alt="Modelos">
+                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Impacto por Modelo</h3>
+                        <img src="{img_modelos_b64}" alt="Modelos" style="width: 100%; height: auto; object-fit: contain;">
                     </div>
                     <div class="chart-box">
-                        <h3>Distribución por Turno</h3>
-                        <img src="{img_turnos_b64}" alt="Turnos">
+                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Distribución por Turno</h3>
+                        <img src="{img_turnos_b64}" alt="Turnos" style="width: 100%; height: auto; object-fit: contain;">
                     </div>
                 </div>
             </div>
             '''
             slides_html.append(slide1)
 
-            # === DIAPOSITIVA 2: REWORK GLOBAL ===
+            # === DIAPOSITIVA 2: REWORK GLOBAL (IGUAL QUE PÁGINA 2 DEL PDF) ===
             slide2 = f'''
             <div class="slide">
-                <div class="slide-header" style="background: linear-gradient(135deg, #065F46 0%, #047857 100%);">
-                    <h1>REWORK DASHBOARD</h1>
-                    <p class="slide-subtitle">ANÁLISIS GLOBAL DE RETRABAJOS</p>
-                    <p class="slide-period">Período: {fecha_display}</p>
+                <div class="slide-header" style="background: linear-gradient(135deg, #065F46 0%, #047857 100%); padding: 30px 60px; text-align: center;">
+                    <h1 style="color: white; font-size: 48px; margin-bottom: 8px;">REWORK DASHBOARD</h1>
+                    <p style="color: white; font-size: 24px; margin-bottom: 5px; opacity: 0.95;">ANÁLISIS GLOBAL DE RETRABAJOS</p>
+                    <p style="color: white; font-size: 18px; opacity: 0.85;">Período: {fecha_display}</p>
                 </div>
-                <div class="slide-kpis">
-                    <div class="kpi-hero" style="background: #10B981;">
-                        <div class="kpi-label">TOTAL RETRABAJOS</div>
-                        <div class="kpi-value-hero">{global_rew:,}</div>
-                        <div class="kpi-status">UNIDADES RECUPERADAS</div>
+                <div class="slide-kpis" style="padding: 25px 60px;">
+                    <div class="kpi-hero" style="background: #10B981; padding: 20px 40px; border-radius: 15px; min-width: 320px; text-align: center;">
+                        <div style="color: white; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">TOTAL RETRABAJOS</div>
+                        <div style="color: white; font-size: 48px; font-weight: 800; margin: 10px 0;">{global_rew:,}</div>
+                        <div style="color: white; font-size: 13px; font-weight: 500;">UNIDADES RECUPERADAS</div>
                     </div>
                 </div>
                 <div class="slide-charts">
                     <div class="chart-box">
-                        <h3>Evolución Temporal</h3>
-                        <img src="{img_evol_r_b64}" alt="Evolución">
+                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Evolución Temporal</h3>
+                        <img src="{img_evol_r_b64}" alt="Evolución" style="width: 100%; height: auto; object-fit: contain;">
                     </div>
                     <div class="chart-box">
-                        <h3>Defectos Recuperados</h3>
-                        <img src="{img_def_r_b64}" alt="Defectos R">
+                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Defectos Recuperados</h3>
+                        <img src="{img_def_r_b64}" alt="Defectos R" style="width: 100%; height: auto; object-fit: contain;">
                     </div>
                     <div class="chart-box">
-                        <h3>Modelos en Retrabajo</h3>
-                        <img src="{img_mod_r_b64}" alt="Modelos R">
+                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Modelos en Retrabajo</h3>
+                        <img src="{img_mod_r_b64}" alt="Modelos R" style="width: 100%; height: auto; object-fit: contain;">
                     </div>
                     <div class="chart-box">
-                        <h3>Distribución por Turno</h3>
-                        <img src="{img_shift_r_b64}" alt="Turnos R">
+                        <h3 style="color: #1E293B; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">Distribución por Turno</h3>
+                        <img src="{img_shift_r_b64}" alt="Turnos R" style="width: 100%; height: auto; object-fit: contain;">
                     </div>
                 </div>
             </div>
@@ -2852,187 +2773,51 @@ class API:
         }}
 
         .slide-header {{
-            padding: 40px 60px;
+            padding: 30px 60px;
             color: white;
             text-align: center;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        }}
-
-        .slide-header h1 {{
-            font-size: 56px;
-            font-weight: 800;
-            margin-bottom: 10px;
-            letter-spacing: -0.5px;
-        }}
-
-        .slide-subtitle {{
-            font-size: 28px;
-            font-weight: 500;
-            opacity: 0.95;
-            margin-bottom: 8px;
-        }}
-
-        .slide-period {{
-            font-size: 22px;
-            font-weight: 400;
-            opacity: 0.85;
         }}
 
         .slide-kpis {{
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 20px;
-            padding: 20px 60px;
+            gap: 18px;
+            padding: 18px 60px;
             flex-wrap: wrap;
-        }}
-
-        .kpi-hero {{
-            padding: 25px 45px;
-            border-radius: 20px;
-            text-align: center;
-            color: white;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-            min-width: 320px;
-        }}
-
-        .kpi-card {{
-            background: white;
-            padding: 20px 35px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            border: 2px solid #E2E8F0;
-            min-width: 250px;
-        }}
-
-        .kpi-label {{
-            font-size: 16px;
-            font-weight: 700;
-            color: rgba(255,255,255,1);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }}
-
-        .kpi-card .kpi-label {{
-            color: #1E293B;
-        }}
-
-        .kpi-value-hero {{
-            font-size: 56px;
-            font-weight: 800;
-            line-height: 1;
-            margin: 12px 0;
-            color: white;
-        }}
-
-        .kpi-value {{
-            font-size: 38px;
-            font-weight: 700;
-            color: #1E293B;
-            margin-top: 6px;
-        }}
-
-        .kpi-status {{
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 1;
-            margin-top: 6px;
-            color: white;
         }}
 
         .slide-charts {{
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            padding: 15px 80px 30px;
+            grid-template-rows: repeat(2, 1fr);
+            gap: 18px;
+            padding: 10px 70px 25px;
+            width: 100%;
+            height: auto;
             max-width: 1920px;
             margin: 0 auto;
+            box-sizing: border-box;
         }}
 
         .chart-box {{
             background: white;
             border-radius: 12px;
-            padding: 15px;
+            padding: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             border: 2px solid #E2E8F0;
             display: flex;
             flex-direction: column;
-            max-height: 380px;
-        }}
-
-        .chart-box h3 {{
-            font-size: 20px;
-            font-weight: 700;
-            color: #1E293B;
-            margin-bottom: 10px;
-            text-align: center;
-            border-bottom: 2px solid #E2E8F0;
-            padding-bottom: 8px;
+            width: 100%;
+            height: 350px;
+            overflow: hidden;
         }}
 
         .chart-box img {{
             width: 100%;
-            max-height: 300px;
+            height: 100%;
             object-fit: contain;
-        }}
-
-        /* Estilos para diapositiva de tendencias */
-        .tendencias-grid {{
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            padding: 40px 80px;
-        }}
-
-        .tendencia-card {{
-            background: white;
-            border-radius: 20px;
-            padding: 40px 30px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-            border: 2px solid #E2E8F0;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }}
-
-        .tendencia-card:hover {{
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-        }}
-
-        .tendencia-icon {{
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 800;
-        }}
-
-        .tendencia-label {{
-            font-size: 16px;
-            font-weight: 700;
-            color: #1E293B;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 15px;
-        }}
-
-        .tendencia-value {{
-            font-size: 52px;
-            font-weight: 800;
-            line-height: 1;
-            margin: 15px 0;
-        }}
-
-        .tendencia-desc {{
-            font-size: 14px;
-            color: #64748B;
-            font-weight: 500;
         }}
 
         .slide-indicator {{
